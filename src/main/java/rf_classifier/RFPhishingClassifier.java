@@ -41,6 +41,12 @@ public class RFPhishingClassifier {
             attributes.add(new Attribute("embedding_" + i));
         }
 
+        attributes.add(new Attribute("contains_url"));
+        attributes.add(new Attribute("contains_ip"));
+        attributes.add(new Attribute("contains_non_ascii"));
+        attributes.add(new Attribute("contains_spam_world"));
+
+
         // Creiamo l'attributo classe (phishing o legitimate)
         ArrayList<String> classValues = new ArrayList<>();
         classValues.add("phishing");
@@ -73,7 +79,8 @@ public class RFPhishingClassifier {
             boolean isPhishing = labels.get(i);
 
             // Creiamo un array con tutti i valori dell'istanza
-            double[] values = new double[769]; // 768 per l'embedding + 1 per la classe
+            // +1 per la classe di phishing
+            double[] values = new double[embedding.length + 1 ];
 
             // Copiamo l'embedding
             for (int j = 0; j < embedding.length; j++) {
@@ -81,7 +88,7 @@ public class RFPhishingClassifier {
             }
 
             // Aggiungiamo la classe (0 per phishing, 1 per legitimate)
-            values[768] = isPhishing ? 0.0 : 1.0;
+            values[embedding.length] = isPhishing ? 0.0 : 1.0;
 
             // Creiamo l'istanza e la aggiungiamo al dataset
             trainingData.add(new DenseInstance(1.0, values));
@@ -128,11 +135,11 @@ public class RFPhishingClassifier {
             float[] embedding = embeddings.get(i);
             boolean isPhishing = labels.get(i);
 
-            double[] values = new double[769];
+            double[] values = new double[embedding.length + 1 ];
             for (int j = 0; j < embedding.length; j++) {
                 values[j] = embedding[j];
             }
-            values[768] = isPhishing ? 0.0 : 1.0;
+            values[embedding.length] = isPhishing ? 0.0 : 1.0;
 
             dataset.add(new DenseInstance(1.0, values));
         }

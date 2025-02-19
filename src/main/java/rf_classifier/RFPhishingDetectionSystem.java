@@ -1,11 +1,11 @@
 package rf_classifier;
 
 import controller.BERTEmbeddingClient;
-import model.EmailFromBert;
-import model.TrainingEmail;
+import controller.EmailFeatureExtractor;
+import controller.FeatureConverter;
+import controller.SpamDetectorFromJson;
+import model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import model.PhishingResult;
-import model.ProcessedEmailForJSON;
 
 import java.util.*;
 import java.io.*;
@@ -31,8 +31,6 @@ public class RFPhishingDetectionSystem {
     public PhishingResult analyzeEmail(String emailText) throws Exception {
         // Ottiene l'embedding da UmBERTO
         EmailFromBert emailFromBert = BERTEmbeddingClient.getEmbedding(emailText);
-//        float[] embedding = umbertoClient.getEmbedding(emailText);
-
 
         // Classifica l'embedding
         boolean isPhishing = classifier.classify(emailFromBert.getEmbedding());
@@ -45,10 +43,9 @@ public class RFPhishingDetectionSystem {
      */
     public void trainFromFile(String trainingDataFile) throws Exception {
         List<float[]> embeddings = new ArrayList<>();
-        List<Integer> textLengths = new ArrayList<>();
-        List<Integer> tokenCounts = new ArrayList<>();
         List<Boolean> labels = new ArrayList<>();
         List<ProcessedEmailForJSON> allProcessedEmails = new ArrayList<>();
+        MailData mailData = new MailData();
 
         // Legge il file JSON delle email di training
         ObjectMapper mapper = new ObjectMapper();
@@ -66,14 +63,23 @@ public class RFPhishingDetectionSystem {
                 // Ottiene l'embedding
                 EmailFromBert emailFromBert = BERTEmbeddingClient.getEmbedding(email.getText());
                 float[] embedding = emailFromBert.getEmbedding();
-                embeddings.add(embedding);
+
+                EmailFeatureExtractor featureExtractor = new EmailFeatureExtractor(email.getText());
+                featureExtractor.extractLinkFeatures(mailData);
+
+                SpamDetectorFromJson spamDetectorFromJson = new SpamDetectorFromJson(email.getText());
+                spamDetectorFromJson.findSpamWord(mailData);
+
+                float[] combinedFeature = FeatureConverter.combineFeatures(embedding, mailData);
+
+                embeddings.add(combinedFeature);
                 labels.add(email.isPhishing());
 
                 // Salva l'embedding processato per uso futuro
                 allProcessedEmails.add(new ProcessedEmailForJSON(
                         email.getText(),
                         email.isPhishing(),
-                        embedding,
+                        combinedFeature,
                         emailFromBert.getNum_tokens(),
                         new Date()
                 ));
