@@ -53,6 +53,11 @@ public class SVMPhishingClassifier {
             attributes.add(new Attribute("embedding_" + i));
         }
 
+        attributes.add(new Attribute("contains_url"));
+        attributes.add(new Attribute("contains_ip"));
+        attributes.add(new Attribute("contains_non_ascii"));
+        attributes.add(new Attribute("contains_spam_world"));
+
         // Attributo classe (phishing o legitimate)
         ArrayList<String> classValues = new ArrayList<>();
         classValues.add("phishing");
@@ -72,16 +77,20 @@ public class SVMPhishingClassifier {
 
         // Creiamo il dataset di training con pesi delle istanze
         for (int i = 0; i < embeddings.size(); i++) {
-            double[] values = new double[769];
             float[] embedding = embeddings.get(i);
+            boolean isPhishing = labels.get(i);
+
+            // Creiamo un array con tutti i valori dell'istanza
+            // Ora la dimensione è embedding.length + 1 per la classe
+            double[] values = new double[embedding.length + 1];
 
             // Copiamo l'embedding
             for (int j = 0; j < embedding.length; j++) {
                 values[j] = embedding[j];
             }
 
-            // Settiamo la classe
-            values[768] = labels.get(i) ? 0.0 : 1.0;
+            // Aggiungiamo la classe (0 per phishing, 1 per legitimate)
+            values[embedding.length] = isPhishing ? 0.0 : 1.0;
 
             // Creiamo l'istanza con peso
             // Diamo più peso alle email in italiano (se necessario)
@@ -113,13 +122,15 @@ public class SVMPhishingClassifier {
         Instances dataset = new Instances(datasetStructure);
 
         for (int i = 0; i < embeddings.size(); i++) {
-            double[] values = new double[769];
             float[] embedding = embeddings.get(i);
+            boolean isPhishing = labels.get(i);
+
+            double[] values = new double[embedding.length + 1];
 
             for (int j = 0; j < embedding.length; j++) {
                 values[j] = embedding[j];
             }
-            values[768] = labels.get(i) ? 0.0 : 1.0;
+            values[embedding.length] = isPhishing ? 0.0 : 1.0;
 
             dataset.add(new DenseInstance(1.0, values));
         }

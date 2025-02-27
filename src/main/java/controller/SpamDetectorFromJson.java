@@ -23,7 +23,7 @@ public class SpamDetectorFromJson {
 
     public void findSpamWord(MailData mailData) throws IOException {
         String detectedLanguage = detectLanguage(this.emailText);
-        System.out.println("Lingua rilevata: " + detectedLanguage);
+//        System.out.println("Lingua rilevata: " + detectedLanguage);
 
         String jsonFile = detectedLanguage.equals("it") ? SPAMWORDSITA : SPAMWORDSENG;
 

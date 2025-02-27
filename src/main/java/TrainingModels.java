@@ -3,6 +3,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import model.TrainingEmail;
 import rf_classifier.RFPhishingDetectionSystem;
 import svm_classifier.SVMPhishingDetectionSystem;
+import xgboost_classifier.XGBoostPhishingDetectionSystem;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,6 +23,8 @@ public class TrainingModels {
             //SVM
             SVMPhishingDetectionSystem svmSystem = new SVMPhishingDetectionSystem(datasetPath);
 
+            //XGBoost
+            XGBoostPhishingDetectionSystem xgboostSystem = new XGBoostPhishingDetectionSystem(datasetPath);
 
             // Leggi il JSON originale
             ObjectMapper mapper = new ObjectMapper();
@@ -42,7 +45,7 @@ public class TrainingModels {
             String tempJsonPath = "temp_training_data.json";
             mapper.writeValue(new File(tempJsonPath), trainingEmails);
 
-            // Processa le email e addestra il modello
+//             Processa le email e addestra il modello
             System.out.println("Training Random Forest...");
             system.trainFromFile(tempJsonPath);
             // Salva il modello addestrato
@@ -51,6 +54,10 @@ public class TrainingModels {
             System.out.println("\nTraining SVM...");
             svmSystem.trainFromFile(tempJsonPath);
             svmSystem.saveModel("svm_model_test.model");
+
+            System.out.println("\nTraining XGBoost...");
+            xgboostSystem.trainFromFile(tempJsonPath);
+            xgboostSystem.saveModel("xgboost_model_test.model");
 
             System.out.println("Elaborazione completata!");
 

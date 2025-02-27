@@ -4,6 +4,7 @@ package controller;
 import model.MailData;
 import org.apache.commons.validator.routines.UrlValidator;
 
+import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,7 +22,9 @@ public class EmailFeatureExtractor {
 
 
     private static void findLinkInText(String text, MailData mailData) {
-        String urlRegex = "\\b((http(s)?://)?(www\\.)?[a-zA-Z0-9-]+(\\.[a-zA-Z]{2,})+(:\\d+)?(/[\\w\\-\\.~:/?#\\[\\]@!$&'()*+,;=%]*)?)\\b";
+//        String urlRegex = "\\b((http(s)?://)?(www\\.)?[a-zA-Z0-9-]+(\\.[a-zA-Z]{2,})+(:\\d+)?(/[\\w\\-\\.~:/?#\\[\\]@!$&'()*+,;=%]*)?)\\b";
+        //TODO: VALUTARE QUALE REGEX E' MIGLIORE
+        String urlRegex = "(https?://|www\\.)([-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6})\\b[-a-zA-Z0-9()@:%_+.~#?&/=\\-]*";
 
         Pattern pattern = Pattern.compile(urlRegex);
         Matcher matcher = pattern.matcher(text);
@@ -31,7 +34,7 @@ public class EmailFeatureExtractor {
 
             // Se il link è un IP, verifichiamo con il metodo isValidIP
             if (isValidIP(originalUrl)) {
-                System.out.println("Indirizzo IP valido trovato: " + originalUrl);
+//                System.out.println("Indirizzo IP valido trovato: " + originalUrl);
                 mailData.setContainsIpAsUrl(true);
                 continue;
             }
@@ -39,13 +42,15 @@ public class EmailFeatureExtractor {
 
             try {
                 if (isValidURL(originalUrl)) {
-                    System.out.println("l'url è valido: " + originalUrl);
+//                    System.out.println("l'url è valido: " + originalUrl);
                     mailData.setLink(originalUrl);
                     if (containsNonASCIICharacters(originalUrl)) {
-                        System.out.println("ATTENZIONE, l'url contiene caratteri sospetti");
+//                        System.out.println("ATTENZIONE, l'url contiene caratteri sospetti");
 //                        mailData.addSuspiciousUrl(originalUrl);
                         mailData.setContainsNonAsciiChars(true);
                     }
+                } else {
+//                    System.out.println("l'url non è valido: " + originalUrl);
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -67,19 +72,27 @@ public class EmailFeatureExtractor {
         return urlValidator.isValid(url);
     }
 
-    private static boolean isValidIP(String ip) {
-        String ipPattern = "^(?:\\d{1,3}\\.){3}\\d{1,3}$";  // Regex per IPv4
-        Pattern pattern = Pattern.compile(ipPattern);
-        Matcher matcher = pattern.matcher(ip);
-        return matcher.matches();
+    private static boolean isValidIP(String url) {
+        try {
+            // Rimuove il protocollo e il percorso per ottenere solo l'host
+            java.net.URL netUrl = new java.net.URL(url.startsWith("http") ? url : "http://" + url);
+            String host = netUrl.getHost();
+
+            // Regex per IPv4
+            String ipPattern = "^(?:\\d{1,3}\\.){3}\\d{1,3}$";
+            Pattern pattern = Pattern.compile(ipPattern);
+            Matcher matcher = pattern.matcher(host);
+
+            return matcher.matches();
+        } catch (Exception e) {
+            return false; // In caso di URL non valido
+        }
     }
 
     //controllo per attacco omografico
     // ritorna true se trova caratteri strani
     private static boolean containsNonASCIICharacters(String domain) {
-        // Regex per trovare caratteri non ASCII
-        Pattern unicodePattern = Pattern.compile("[^\\x00-\\x7F]");     // cerca caratteri che non trovano nel renge 0 a 127
-        return unicodePattern.matcher(domain).find();
+        return !Charset.forName("US-ASCII").newEncoder().canEncode(domain);
     }
 
     public String getEmailText() {

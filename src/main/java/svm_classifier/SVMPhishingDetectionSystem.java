@@ -2,10 +2,10 @@ package svm_classifier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import controller.BERTEmbeddingClient;
-import model.EmailFromBert;
-import model.PhishingResult;
-import model.ProcessedEmailForJSON;
-import model.TrainingEmail;
+import controller.EmailFeatureExtractor;
+import controller.FeatureConverter;
+import controller.SpamDetectorFromJson;
+import model.*;
 
 import java.util.*;
 import java.io.*;
@@ -49,6 +49,7 @@ public class SVMPhishingDetectionSystem {
         List<float[]> embeddings = new ArrayList<>();
         List<Boolean> labels = new ArrayList<>();
         List<ProcessedEmailForJSON> allProcessedEmails = new ArrayList<>();
+        MailData mailData = new MailData();
 
         // Leggiamo il file JSON delle email di training
         ObjectMapper mapper = new ObjectMapper();
@@ -64,14 +65,24 @@ public class SVMPhishingDetectionSystem {
             try {
                 EmailFromBert emailFromBert = BERTEmbeddingClient.getEmbedding(email.getText());
                 float[] embedding = emailFromBert.getEmbedding();
-                embeddings.add(embedding);
+
+                EmailFeatureExtractor featureExtractor = new EmailFeatureExtractor(email.getText());
+                featureExtractor.extractLinkFeatures(mailData);
+
+                SpamDetectorFromJson spamDetectorFromJson = new SpamDetectorFromJson(email.getText());
+                spamDetectorFromJson.findSpamWord(mailData);
+
+                float[] combinedFeature = FeatureConverter.combineFeatures(embedding, mailData);
+
+
+                embeddings.add(combinedFeature);
                 labels.add(email.isPhishing());
 
                 // Salviamo l'email processata
                 allProcessedEmails.add(new ProcessedEmailForJSON(
                         email.getText(),
                         email.isPhishing(),
-                        embedding,
+                        combinedFeature,
                         emailFromBert.getNum_tokens(),
                         new Date()
                 ));
