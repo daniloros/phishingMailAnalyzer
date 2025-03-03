@@ -62,6 +62,9 @@ public class XGBoostPhishingClassifier {
         attributes.add(new Attribute("contains_non_ascii"));
         attributes.add(new Attribute("contains_spam_world"));
 
+        attributes.add(new Attribute("sentiment_score"));
+        attributes.add(new Attribute("sentiment_magnitude"));
+
         // Creiamo l'attributo classe (phishing o legitimate)
         ArrayList<String> classValues = new ArrayList<>();
         classValues.add("phishing");

@@ -64,6 +64,9 @@ public class RFPhishingDetectionSystem {
                 EmailFromBert emailFromBert = BERTEmbeddingClient.getEmbedding(email.getText());
                 float[] embedding = emailFromBert.getEmbedding();
 
+                mailData.setSentimentMagnitude(email.getSentimentMagnitude());
+                mailData.setSentimentScore(email.getSentimentScore());
+
                 EmailFeatureExtractor featureExtractor = new EmailFeatureExtractor(email.getText());
                 featureExtractor.extractLinkFeatures(mailData);
 

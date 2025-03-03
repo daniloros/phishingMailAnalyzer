@@ -17,6 +17,9 @@ public class FeatureConverter {
         features.add(mailData.isContainsIpAsUrl() ? 1.0f : 0.0f);
         features.add(mailData.isContainsSpam() ? 1.0f : 0.0f);
 
+        features.add(mailData.getSentimentMagnitude());
+        features.add(mailData.getSentimentScore());
+
         // Convertiamo la List<Float> in float[]
         float[] featureArray = new float[features.size()];
         for (int i = 0; i < features.size(); i++) {

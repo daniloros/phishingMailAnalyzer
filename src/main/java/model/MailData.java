@@ -12,6 +12,9 @@ public class MailData {
     private boolean containsNonAsciiChars;
     private Set<String> attachmentTypes;
     private boolean containsSpam;
+    private float sentimentScore;
+    private float sentimentMagnitude;
+
 
 
 
@@ -79,5 +82,21 @@ public class MailData {
 
     public void setContainsSpam(boolean containsSpam) {
         this.containsSpam = containsSpam;
+    }
+
+    public float getSentimentMagnitude() {
+        return sentimentMagnitude;
+    }
+
+    public void setSentimentMagnitude(float sentimentMagnitude) {
+        this.sentimentMagnitude = sentimentMagnitude;
+    }
+
+    public float getSentimentScore() {
+        return sentimentScore;
+    }
+
+    public void setSentimentScore(float sentimentScore) {
+        this.sentimentScore = sentimentScore;
     }
 }

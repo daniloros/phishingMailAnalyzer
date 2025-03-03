@@ -58,6 +58,9 @@ public class SVMPhishingClassifier {
         attributes.add(new Attribute("contains_non_ascii"));
         attributes.add(new Attribute("contains_spam_world"));
 
+        attributes.add(new Attribute("sentiment_score"));
+        attributes.add(new Attribute("sentiment_magnitude"));
+
         // Attributo classe (phishing o legitimate)
         ArrayList<String> classValues = new ArrayList<>();
         classValues.add("phishing");
