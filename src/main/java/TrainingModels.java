@@ -15,7 +15,7 @@ public class TrainingModels {
             // Configurazione
 //            String umbertoApiUrl = "http://localhost:8000/analyze";
             String datasetPath = "src/main/resources/dataset/processed";
-            String inputJsonPath = "src/main/resources/dataset/training_emails_400.json";
+            String inputJsonPath = "src/main/resources/dataset/emails_sentiment.json";
 
             // Random Forest
             RFPhishingDetectionSystem system = new RFPhishingDetectionSystem(datasetPath);
@@ -38,6 +38,8 @@ public class TrainingModels {
                 TrainingEmail trainingEmail = new TrainingEmail();
                 trainingEmail.setText(email.get("text").asText());
                 trainingEmail.setPhishing(email.get("type").asText().toLowerCase().contains("phishing"));
+                trainingEmail.setSentimentMagnitude(Float.parseFloat(email.get("metadata").get("sentiment_magnitude").asText()));
+                trainingEmail.setSentimentScore(Float.parseFloat(email.get("metadata").get("sentiment_score").asText()));
                 trainingEmails.add(trainingEmail);
             }
 
