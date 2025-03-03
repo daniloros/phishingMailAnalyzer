@@ -1,10 +1,7 @@
 package svm_classifier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import controller.BERTEmbeddingClient;
-import controller.EmailFeatureExtractor;
-import controller.FeatureConverter;
-import controller.SpamDetectorFromJson;
+import controller.*;
 import model.*;
 
 import java.util.*;
@@ -33,13 +30,25 @@ public class SVMPhishingDetectionSystem {
      * Analizza una singola email utilizzando il classificatore SVM.
      */
     public PhishingResult analyzeEmail(String emailText) throws Exception {
-        // Otteniamo l'embedding da BERT
+        MailData mailData = new MailData();
         EmailFromBert emailFromBert = BERTEmbeddingClient.getEmbedding(emailText);
+        float[] embedding = emailFromBert.getEmbedding();
+
+        NaturalLanguage.extractNaturalLanguage(mailData, emailText);
+
+        EmailFeatureExtractor featureExtractor = new EmailFeatureExtractor(emailText);
+        featureExtractor.extractLinkFeatures(mailData);
+
+        SpamDetectorFromJson spamDetectorFromJson = new SpamDetectorFromJson(emailText);
+        spamDetectorFromJson.findSpamWord(mailData);
+
+        float[] combinedFeature = FeatureConverter.combineFeatures(embedding, mailData);
+
 
         // Classifichiamo usando SVM
-        boolean isPhishing = classifier.classify(emailFromBert.getEmbedding());
+        boolean isPhishing = classifier.classify(combinedFeature);
 
-        return new PhishingResult(emailText, isPhishing, emailFromBert.getEmbedding(), emailFromBert.getNum_tokens());
+        return new PhishingResult(emailText, isPhishing, embedding, emailFromBert.getNum_tokens());
     }
 
     /**

@@ -1,9 +1,6 @@
 package xgboost_classifier;
 
-import controller.BERTEmbeddingClient;
-import controller.EmailFeatureExtractor;
-import controller.FeatureConverter;
-import controller.SpamDetectorFromJson;
+import controller.*;
 import model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -33,13 +30,22 @@ public class XGBoostPhishingDetectionSystem {
      * Analizza una singola email e determina se è phishing
      */
     public PhishingResult analyzeEmail(String emailText) throws Exception {
-        // Ottiene l'embedding da UmBERTO
+        MailData mailData = new MailData();
         EmailFromBert emailFromBert = BERTEmbeddingClient.getEmbedding(emailText);
+        float[] embedding = emailFromBert.getEmbedding();
 
-        // Classifica l'embedding
-        boolean isPhishing = classifier.classify(emailFromBert.getEmbedding());
+        NaturalLanguage.extractNaturalLanguage(mailData, emailText);
 
-        return new PhishingResult(emailText, isPhishing, emailFromBert.getEmbedding(), emailFromBert.getNum_tokens());
+        EmailFeatureExtractor featureExtractor = new EmailFeatureExtractor(emailText);
+        featureExtractor.extractLinkFeatures(mailData);
+
+        SpamDetectorFromJson spamDetectorFromJson = new SpamDetectorFromJson(emailText);
+        spamDetectorFromJson.findSpamWord(mailData);
+
+        float[] combinedFeature = FeatureConverter.combineFeatures(embedding, mailData);
+
+        boolean isPhishing = classifier.classify(combinedFeature);
+        return new PhishingResult(emailText, isPhishing, combinedFeature, emailFromBert.getNum_tokens());
     }
 
     /**

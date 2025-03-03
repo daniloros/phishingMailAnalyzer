@@ -108,7 +108,7 @@ public class RFPhishingClassifier {
      */
     public boolean classify(float[] embedding) throws Exception {
         // Creiamo un'istanza per il nuovo embedding
-        double[] values = new double[769];
+        double[] values = new double[embedding.length];
 
         // Copiamo l'embedding
         for (int i = 0; i < embedding.length; i++) {
@@ -122,7 +122,6 @@ public class RFPhishingClassifier {
         // Classifichiamo l'istanza
         double prediction = classifier.classifyInstance(instance);
 
-        System.out.println(prediction);
         // Convertiamo la predizione in boolean
         return prediction == 0.0; // 0.0 = phishing, 1.0 = legitimate
     }
