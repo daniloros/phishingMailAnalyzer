@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Email Analyzer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .result-card {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .phishing {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .legitimate {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .spinner-border {
+            display: none;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Email Analyzer</h1>
+                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                    <div class="container-fluid">
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                                aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbarNav">
+                            <ul class="navbar-nav">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/">Home</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="/analyzer">Email Analyzer</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/comparison">Classifiers Comparison</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Analyze Email for Phishing</h5>
+                </div>
+                <div class="card-body">
+                    <form id="emailForm">
+                        <div class="mb-3">
+                            <label for="emailText" class="form-label">Email Text</label>
+                            <textarea class="form-control" id="emailText" rows="10" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="classifier" class="form-label">Classifier</label>
+                            <select class="form-select" id="classifier">
+                                <option value="rf">Random Forest</option>
+                                <option value="svm">SVM</option>
+                                <option value="xgboost">XGBoost</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                                <span class="spinner-border spinner-border-sm" id="spinner" role="status"
+                                      aria-hidden="true"></span>
+                            Analyze
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card result-card" id="resultCard">
+                <div class="card-header" id="resultHeader">
+                    <h5>Analysis Result</h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title" id="resultTitle">Phishing Detection</h5>
+                    <p class="card-text" id="resultText"></p>
+                    <p class="card-text"><strong>Classifier:</strong> <span id="resultClassifier"></span></p>
+                    <p class="card-text"><strong>Tokens:</strong> <span id="resultTokens"></span></p>
+                    <p class="card-text"><strong>Features:</strong> <span id="resultFeatures"></span></p>
+
+                    <div class="mt-4" id="feedbackSection">
+                        <h6>Was this prediction correct?</h6>
+                        <button class="btn btn-success me-2" id="correctBtn">Yes, correct</button>
+                        <button class="btn btn-danger" id="incorrectBtn">No, incorrect</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="footer mt-5">
+    <div class="container">
+        <p>&copy; 2025 Phishing Detection System</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const emailForm = document.getElementById('emailForm');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const spinner = document.getElementById('spinner');
+        const resultCard = document.getElementById('resultCard');
+        const resultHeader = document.getElementById('resultHeader');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultText = document.getElementById('resultText');
+        const resultClassifier = document.getElementById('resultClassifier');
+        const resultTokens = document.getElementById('resultTokens');
+        const resultFeatures = document.getElementById('resultFeatures');
+        const correctBtn = document.getElementById('correctBtn');
+        const incorrectBtn = document.getElementById('incorrectBtn');
+
+        let lastResult = null;
+
+        emailForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const emailText = document.getElementById('emailText').value;
+            const classifier = document.getElementById('classifier').value;
+
+            if (!emailText) {
+                alert('Please enter email text to analyze');
+                return;
+            }
+
+            // Reset UI
+            resultCard.style.display = 'none';
+            analyzeBtn.disabled = true;
+            spinner.style.display = 'inline-block';
+
+            // Determine endpoint based on classifier
+            let endpoint = '/api/analyze/';
+            switch (classifier) {
+                case 'rf':
+                    endpoint += 'rf';
+                    break;
+                case 'svm':
+                    endpoint += 'svm';
+                    break;
+                case 'xgboost':
+                    endpoint += 'xgboost';
+                    break;
+            }
+
+            // Make API request
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({text: emailText})
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    lastResult = data;
+
+                    // Update result card
+                    resultClassifier.textContent = data.classifier;
+                    resultTokens.textContent = data.numTokens;
+                    resultFeatures.textContent = data.features;
+
+                    if (data.phishing) {
+                        resultHeader.className = 'card-header bg-danger text-white';
+                        resultTitle.textContent = 'Phishing Detected';
+                        resultText.textContent = 'This email appears to be a phishing attempt!';
+                    } else {
+                        resultHeader.className = 'card-header bg-success text-white';
+                        resultTitle.textContent = 'Legitimate Email';
+                        resultText.textContent = 'This email appears to be legitimate.';
+                    }
+
+                    // Show result
+                    resultCard.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while analyzing the email.');
+                })
+                .finally(() => {
+                    // Reset UI
+                    analyzeBtn.disabled = false;
+                    spinner.style.display = 'none';
+                });
+        });
+
+        // Handle feedback buttons
+        correctBtn.addEventListener('click', function () {
+            if (lastResult) {
+                sendFeedback(lastResult.text, lastResult.phishing, lastResult.classifier, lastResult.resultId);
+            }
+        });
+
+        incorrectBtn.addEventListener('click', function () {
+            if (lastResult) {
+                sendFeedback(lastResult.text, !lastResult.phishing, lastResult.classifier, lastResult.resultId);
+            }
+        });
+
+        function sendFeedback(emailText, userFeedback, classifier, resultId) {
+            // Determine classifier code
+            let classifierCode = 'rf';
+            if (classifier === 'SVM') {
+                classifierCode = 'svm';
+            } else if (classifier === 'XGBoost') {
+                classifierCode = 'xgboost';
+            }
+
+            fetch('/api/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    emailText: emailText,
+                    userFeedback: userFeedback,
+                    classifier: classifierCode,
+                    resultId: resultId
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert('Thank you for your feedback!');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while submitting feedback.');
+                });
+        }
+    });
+</script>
+</body>
+</html>

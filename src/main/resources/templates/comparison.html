@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Classifier Comparison</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .result-card {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .phishing {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .legitimate {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .spinner-border {
+            display: none;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        .classifier-result {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .result-phishing {
+            background-color: #f8d7da;
+        }
+
+        .result-legitimate {
+            background-color: #d4edda;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Classifier Comparison</h1>
+                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                    <div class="container-fluid">
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                                aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbarNav">
+                            <ul class="navbar-nav">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/">Home</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/analyzer">Email Analyzer</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="/comparison">Classifiers Comparison</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Compare All Classifiers</h5>
+                </div>
+                <div class="card-body">
+                    <form id="comparisonForm">
+                        <div class="mb-3">
+                            <label for="emailText" class="form-label">Email Text</label>
+                            <textarea class="form-control" id="emailText" rows="10" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                            <span class="spinner-border spinner-border-sm" id="spinner" role="status"
+                                  aria-hidden="true"></span>
+                            Compare All Classifiers
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card result-card" id="resultCard">
+                <div class="card-header">
+                    <h5>Comparison Results</h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title" id="resultTitle">Phishing Detection Comparison</h5>
+                    <p class="card-text" id="resultSummary"></p>
+                    <p class="card-text"><strong>Tokens:</strong> <span id="resultTokens"></span></p>
+
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="classifier-result" id="rfResult">
+                                <h6>Random Forest</h6>
+                                <p id="rfVerdict"></p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="classifier-result" id="svmResult">
+                                <h6>SVM</h6>
+                                <p id="svmVerdict"></p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="classifier-result" id="xgboostResult">
+                                <h6>XGBoost</h6>
+                                <p id="xgboostVerdict"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4" id="feedbackSection" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Provide Feedback</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>If the consensus is incorrect, you can provide feedback:</p>
+                                    <div class="mb-3">
+                                        <label class="form-label">This email is actually:</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="feedbackType"
+                                                   id="feedbackPhishing" value="phishing">
+                                            <label class="form-check-label" for="feedbackPhishing">
+                                                Phishing
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="feedbackType"
+                                                   id="feedbackLegitimate" value="legitimate">
+                                            <label class="form-check-label" for="feedbackLegitimate">
+                                                Legitimate
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Preferred classifier for feedback:</label>
+                                        <select class="form-select" id="feedbackClassifier">
+                                            <option value="rf">Random Forest</option>
+                                            <option value="svm">SVM</option>
+                                            <option value="xgboost">XGBoost</option>
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn btn-primary" id="submitFeedbackBtn">Submit
+                                        Feedback
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4" id="consensusSection">
+                        <h6>Consensus Analysis</h6>
+                        <p id="consensusText"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="footer mt-5">
+    <div class="container">
+        <p>&copy; 2025 Phishing Detection System</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const comparisonForm = document.getElementById('comparisonForm');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const spinner = document.getElementById('spinner');
+        const resultCard = document.getElementById('resultCard');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultSummary = document.getElementById('resultSummary');
+        const resultTokens = document.getElementById('resultTokens');
+        const rfResult = document.getElementById('rfResult');
+        const svmResult = document.getElementById('svmResult');
+        const xgboostResult = document.getElementById('xgboostResult');
+        const rfVerdict = document.getElementById('rfVerdict');
+        const svmVerdict = document.getElementById('svmVerdict');
+        const xgboostVerdict = document.getElementById('xgboostVerdict');
+        const consensusText = document.getElementById('consensusText');
+        const feedbackSection = document.getElementById('feedbackSection');
+        const submitFeedbackBtn = document.getElementById('submitFeedbackBtn');
+
+        let lastResults = null;
+
+        comparisonForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const emailText = document.getElementById('emailText').value;
+
+            if (!emailText) {
+                alert('Please enter email text to analyze');
+                return;
+            }
+
+            // Reset UI
+            resultCard.style.display = 'none';
+            feedbackSection.style.display = 'none';
+            analyzeBtn.disabled = true;
+            spinner.style.display = 'inline-block';
+
+            // Make API request
+            fetch('/api/analyze/compare', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({text: emailText})
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Store results for potential feedback
+                    lastResults = data;
+
+                    // Update token count
+                    resultTokens.textContent = data.numTokens;
+
+                    // Update classifier results
+                    updateClassifierResult(rfResult, rfVerdict, data.rfPrediction, 'Random Forest');
+                    updateClassifierResult(svmResult, svmVerdict, data.svmPrediction, 'SVM');
+                    updateClassifierResult(xgboostResult, xgboostVerdict, data.xgboostPrediction, 'XGBoost');
+
+                    // Create consensus
+                    const phishingCount = [data.rfPrediction, data.svmPrediction, data.xgboostPrediction]
+                        .filter(result => result).length;
+
+                    if (phishingCount >= 2) {
+                        resultTitle.textContent = 'Consensus: Phishing Detected';
+                        resultSummary.textContent = `${phishingCount} out of 3 classifiers identified this email as phishing.`;
+                        consensusText.textContent = 'MAJORITY VERDICT: This email is likely a PHISHING ATTEMPT.';
+
+                        // Pre-select phishing in feedback form
+                        document.getElementById('feedbackPhishing').checked = true;
+                    } else {
+                        resultTitle.textContent = 'Consensus: Legitimate Email';
+                        resultSummary.textContent = `${3 - phishingCount} out of 3 classifiers identified this email as legitimate.`;
+                        consensusText.textContent = 'MAJORITY VERDICT: This email is likely LEGITIMATE.';
+
+                        // Pre-select legitimate in feedback form
+                        document.getElementById('feedbackLegitimate').checked = true;
+                    }
+
+                    // Show results and feedback section
+                    resultCard.style.display = 'block';
+                    feedbackSection.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while comparing classifiers.');
+                })
+                .finally(() => {
+                    // Reset UI
+                    analyzeBtn.disabled = false;
+                    spinner.style.display = 'none';
+                });
+        });
+
+        // Handle feedback submission
+        submitFeedbackBtn.addEventListener('click', function () {
+            if (!lastResults) {
+                alert('Please analyze an email first.');
+                return;
+            }
+
+            // Get selected feedback
+            const isPhishing = document.getElementById('feedbackPhishing').checked;
+            const classifier = document.getElementById('feedbackClassifier').value;
+
+            let resultId = null;
+            if (classifier === 'rf') {
+                resultId = lastResults.rfResultId;
+            } else if (classifier === 'svm') {
+                resultId = lastResults.svmResultId;
+            } else if (classifier === 'xgboost') {
+                resultId = lastResults.xgboostResultId;
+            }
+
+            // Send feedback
+            fetch('/api/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    emailText: lastResults.emailText,
+                    userFeedback: isPhishing,
+                    classifier: classifier,
+                    resultId: resultId
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert('Thank you for your feedback!');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while submitting feedback.');
+                });
+        });
+
+        function updateClassifierResult(resultDiv, verdictElement, isPhishing, classifierName) {
+            if (isPhishing) {
+                resultDiv.className = 'classifier-result result-phishing';
+                verdictElement.textContent = `VERDICT: PHISHING`;
+            } else {
+                resultDiv.className = 'classifier-result result-legitimate';
+                verdictElement.textContent = `VERDICT: LEGITIMATE`;
+            }
+        }
+    });
+</script>
+</body>
+</html>

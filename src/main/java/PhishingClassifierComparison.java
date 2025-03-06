@@ -16,9 +16,9 @@ public class PhishingClassifierComparison {
             XGBoostPhishingDetectionSystem xgbSystem = new XGBoostPhishingDetectionSystem(datasetPath);
 
             // Carichiamo i rispettivi modelli
-            rfSystem.loadModel("rf_model_test_new.model");
-            svmSystem.loadModel("svm_model_test.model");
-            xgbSystem.loadModel("xgboost_model_test.model");
+            rfSystem.loadModel("src/main/resources/models/rf_model_test_new.model");
+            svmSystem.loadModel("src/main/resources/models/svm_model_test.model");
+            xgbSystem.loadModel("src/main/resources/models/xgboost_model_test.model");
 
             // Email di test
             TrainingEmail toAnalyze = new TrainingEmail();

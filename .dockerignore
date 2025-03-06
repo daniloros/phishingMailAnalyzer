@@ -1,0 +1,4 @@
+.git
+.gitignore
+target/
+!target/phishing-detector-2.0-SNAPSHOT.jar
