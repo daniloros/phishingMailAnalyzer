@@ -8,13 +8,25 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import com.google.gson.Gson;
+import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
+
 import java.io.IOException;
 
+@Component
 public class BERTEmbeddingClient {
-    private static String API_URL = "http://localhost:8000/analyze";
+    private static String API_URL;
+
+    @Value("${app.bert.api.url}")
+    public void setApiUrl(String url) {
+        API_URL = url;
+    }
 
     public BERTEmbeddingClient(String umbertoApiUrl) {
         API_URL = umbertoApiUrl;
+    }
+
+    public BERTEmbeddingClient() {
     }
 
     public static EmailFromBert getEmbedding(String emailText) throws IOException {
