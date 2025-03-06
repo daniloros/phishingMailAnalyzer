@@ -41,7 +41,7 @@ ENV app.spam.words.en=/app/dataset/spamWords/en.json
 RUN mkdir -p /app/dataset/processed
 
 # Expose the port the app will run on
-EXPOSE 8080
+EXPOSE ${PORT:-8080}
 
 # Run the application
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
