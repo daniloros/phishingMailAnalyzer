@@ -21,7 +21,7 @@ FROM eclipse-temurin:21
 WORKDIR /app
 
 # Copy the built jar from stage 1
-COPY --from=builder /app/target/phishing-detector-2.0-SNAPSHOT.jar /app/app.jar
+COPY --from=builder /app/target/phishingMailAnalyzer-2.0-SNAPSHOT.jar /app/app.jar
 
 # Copy required model files and datasets
 COPY src/main/resources/models /app/models
