@@ -17,7 +17,7 @@ COPY src ./src
 RUN ./mvnw package -DskipTests
 
 # Stage 2: Create the runtime image
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:21
 WORKDIR /app
 
 # Copy the built jar from stage 1
