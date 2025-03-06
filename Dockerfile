@@ -20,6 +20,10 @@ RUN ./mvnw package -DskipTests
 FROM eclipse-temurin:21
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy the built jar from stage 1
 COPY --from=builder /app/target/phishingMailAnalyzer-2.0-SNAPSHOT.jar /app/app.jar
 
@@ -27,6 +31,9 @@ COPY --from=builder /app/target/phishingMailAnalyzer-2.0-SNAPSHOT.jar /app/app.j
 COPY src/main/resources/models /app/models
 COPY src/main/resources/dataset /app/dataset
 COPY src/main/resources/dataset/spamWords /app/dataset/spamWords
+
+ENV PORT=8080
+ENV LD_LIBRARY_PATH=/usr/lib
 
 # Set environment variables
 ENV app.dataset.path=/app/dataset/processed
