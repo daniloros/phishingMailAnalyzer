@@ -44,4 +44,4 @@ RUN mkdir -p /app/dataset/processed
 EXPOSE 8080
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+CMD ["java", "-jar", "app.jar"]
