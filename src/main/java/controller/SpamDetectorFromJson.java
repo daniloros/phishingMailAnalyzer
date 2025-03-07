@@ -12,8 +12,8 @@ import java.io.IOException;
 import java.util.List;
 
 public class SpamDetectorFromJson {
-    private static final String SPAMWORDSITA = "src/main/resources/dataset/spamWords/it.json";
-    private static final String SPAMWORDSENG = "src/main/resources/dataset/spamWords/en.json";
+    private static final String SPAMWORDSITA = System.getenv("app.spam.words.it") != null ? System.getenv("app.spam.words.it") : "src/main/resources/dataset/spamWords/it.json";
+    private static final String SPAMWORDSENG = System.getenv("app.spam.words.en") != null ? System.getenv("app.spam.words.en") : "src/main/resources/dataset/spamWords/it.json";
 
     private String emailText;
 
