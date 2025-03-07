@@ -19,25 +19,9 @@ import java.util.Map;
 public class NaturalLanguage {
 
    public static void extractNaturalLanguage(MailData mailData, String mailText) throws IOException {
-       // Instantiates a client
-       GoogleCredentials credentials;
-
-       // Controlla se siamo in ambiente cloud o locale
-       String credentialsPath = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
-       if (credentialsPath != null) {
-           // In ambiente cloud, usa la variabile d'ambiente
-           credentials = GoogleCredentials.getApplicationDefault();
-       } else {
-           // In ambiente locale, usa il file
-           credentials = GoogleCredentials.fromStream(new FileInputStream("phishingmailanalyzer-c0031f866de9.json"));
-       }
-
-       // Crea un client configurando le credenziali
-       // Configura le impostazioni del client con il provider delle credenziali
-       LanguageServiceSettings settings = LanguageServiceSettings.newBuilder()
-               .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
-               .build();
+       LanguageServiceSettings settings = LanguageServiceSettings.newBuilder().build();
        try (LanguageServiceClient language = LanguageServiceClient.create(settings)) {
+
 
            Document doc = Document.newBuilder().setContent(mailText).setType(Document.Type.PLAIN_TEXT).build();
 
