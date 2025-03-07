@@ -47,6 +47,3 @@ public class PhishingClassifierComparison {
         }
     }
 }
-
-
-//ciao ti informiamo che a breve cambieranno le condizioni di privacy del nostro servizio. Puoi visitarle cliccando a questo link

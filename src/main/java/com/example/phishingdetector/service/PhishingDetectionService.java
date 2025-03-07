@@ -1,6 +1,7 @@
 package com.example.phishingdetector.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.cloud.storage.*;
 import model.PhishingResult;
 import model.ProcessedEmailForJSON;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import xgboost_classifier.XGBoostPhishingDetectionSystem;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -33,6 +35,9 @@ public class PhishingDetectionService {
 
     @Value("${app.model.xgboost.path}")
     private String xgboostModelPath;
+
+    @Value("${app.cloud.storage.name}")
+    private String bucketName;
 
     private RFPhishingDetectionSystem rfSystem;
     private SVMPhishingDetectionSystem svmSystem;
@@ -122,20 +127,28 @@ public class PhishingDetectionService {
     private void saveFeedbackToJson(ProcessedEmailForJSON feedback, String classifier) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
 
-        String fileName = "unified_feedback_dataset.json";
+        String fileName = "feedback_dataset.json";
 
         File feedbackFile = new File(datasetPath + "/" + fileName);
-
-        // Assicuriamoci che la directory esista
-        feedbackFile.getParentFile().mkdirs();
+        feedbackFile.getParentFile().mkdirs();// la directory deve esistere
 
         List<ProcessedEmailForJSON> existingFeedback = new ArrayList<>();
 
-        // Se il file esiste, leggiamo il contenuto esistente
-        if (feedbackFile.exists()) {
-            existingFeedback = mapper.readValue(feedbackFile,
+        //inizializzo il cloud storage
+        Storage storage = StorageOptions.getDefaultInstance().getService();
+        BlobId blobId = BlobId.of(bucketName, fileName);
+        // Controlla se il file esiste già nel bucket
+        Blob blob = storage.get(blobId);
+        if (blob != null && blob.exists()) {
+            // Scarica il contenuto del file esistente
+            byte[] content = blob.getContent();
+            String jsonContent = new String(content, StandardCharsets.UTF_8);
+
+            // Deserializza il contenuto JSON esistente
+            existingFeedback = mapper.readValue(jsonContent,
                     mapper.getTypeFactory().constructCollectionType(List.class, ProcessedEmailForJSON.class));
         }
+
 
         // Controllo per evitare duplicati
         boolean isDuplicate = false;
@@ -152,18 +165,13 @@ public class PhishingDetectionService {
         if (!isDuplicate) {
             existingFeedback.add(feedback);
 
-            // Salviamo il file aggiornato
-            mapper.writeValue(feedbackFile, existingFeedback);
-            logger.debug("Feedback salvato nel file unificato: {}", feedbackFile.getAbsolutePath());
+            // Converti la lista aggiornata in JSON e carico sul cloud
+            String updatedJson = mapper.writeValueAsString(existingFeedback);
+            BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/json").build();
+            storage.create(blobInfo, updatedJson.getBytes(StandardCharsets.UTF_8));
+
+            logger.debug("Feedback salvato nel file unificato su Cloud Storage: gs://{}/{}", bucketName, fileName);
         }
     }
 
-    /**
-     * Crea un file JSON unificato con tutti i feedback per uso futuro
-     * Questo può essere utilizzato per aggiornare tutti i classificatori con nuovi dati
-     */
-    public void consolidateFeedback() throws IOException {
-        // Questo metodo non è più necessario poiché ora stiamo già salvando tutto in un unico file
-        logger.info("Tutti i feedback sono già salvati in un file unificato");
-    }
 }
