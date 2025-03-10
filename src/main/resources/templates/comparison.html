@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle}">Classifier Comparison</title>
+    <title th:text="${pageTitle}">Confronta i classificatori</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
         .header {
@@ -64,7 +64,7 @@
     <div class="container">
         <div class="row">
             <div class="col">
-                <h1>Classifier Comparison</h1>
+                <h1>Confronta i classificatori</h1>
                 <nav class="navbar navbar-expand-lg navbar-light bg-light">
                     <div class="container-fluid">
                         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -78,10 +78,10 @@
                                     <a class="nav-link" href="/">Home</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="/analyzer">Email Analyzer</a>
+                                    <a class="nav-link" href="/analyzer">Analizza Email</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link active" href="/comparison">Classifiers Comparison</a>
+                                    <a class="nav-link active" href="/comparison">Confronta i classificatori</a>
                                 </li>
                             </ul>
                         </div>
@@ -96,19 +96,31 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">
-                    <h5>Compare All Classifiers</h5>
-                </div>
                 <div class="card-body">
+                    <div class="card col-md-6">
+                        <div class="card-header">
+                            <h5>Carica un file email</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="emlUploadForm" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <label for="emlFile">Seleziona un file .eml</label>
+                                    <input type="file" class="form-control-file" id="emlFile" name="emlFile"
+                                           accept=".eml">
+                                </div>
+                                <button type="button" id="uploadEmlBtn" class="btn btn-primary mt-2">Conferma</button>
+                            </form>
+                        </div>
+                    </div>
                     <form id="comparisonForm">
                         <div class="mb-3">
-                            <label for="emailText" class="form-label">Email Text</label>
+                            <label for="emailText" class="form-label">Oppure scrivi qui il tuo contenuto:</label>
                             <textarea class="form-control" id="emailText" rows="10" required></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary" id="analyzeBtn">
                             <span class="spinner-border spinner-border-sm" id="spinner" role="status"
                                   aria-hidden="true"></span>
-                            Compare All Classifiers
+                            Clicca qui per confrontare
                         </button>
                     </form>
                 </div>
@@ -360,6 +372,36 @@
                 verdictElement.textContent = `VERDICT: LEGITIMATE`;
             }
         }
+    });
+</script>
+<script>
+    document.getElementById('uploadEmlBtn').addEventListener('click', function () {
+        const fileInput = document.getElementById('emlFile');
+        if (fileInput.files.length === 0) {
+            alert('Seleziona un file .eml prima di continuare');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('emlFile', fileInput.files[0]);
+
+        fetch('/api/upload-eml', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Errore: ' + data.error);
+                } else {
+                    // Inserisci il contenuto nel campo di testo
+                    document.getElementById('emailText').value = data.text;
+                }
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                alert('Si è verificato un errore durante l\'elaborazione del file');
+            });
     });
 </script>
 </body>
