@@ -36,7 +36,7 @@ public class SVMPhishingDetectionSystem {
 
         NaturalLanguage.extractNaturalLanguage(mailData, emailText);
 
-        EmailFeatureExtractor featureExtractor = new EmailFeatureExtractor(emailText);
+        EmailLinkExtractor featureExtractor = new EmailLinkExtractor(emailText);
         featureExtractor.extractLinkFeatures(mailData);
 
         SpamDetectorFromJson spamDetectorFromJson = new SpamDetectorFromJson(emailText);
@@ -79,7 +79,7 @@ public class SVMPhishingDetectionSystem {
                 mailData.setSentimentScore(email.getSentimentScore());
 
 
-                EmailFeatureExtractor featureExtractor = new EmailFeatureExtractor(email.getText());
+                EmailLinkExtractor featureExtractor = new EmailLinkExtractor(email.getText());
                 featureExtractor.extractLinkFeatures(mailData);
 
                 SpamDetectorFromJson spamDetectorFromJson = new SpamDetectorFromJson(email.getText());
