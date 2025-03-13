@@ -190,6 +190,8 @@ public class PhishingControllerAPI {
         }
     }
 
+
+    //TODO: da eliminare, sotituito con l'EmailUploadController
     @PostMapping("/upload-eml")
     public ResponseEntity<?> handleEmlUpload(@RequestParam("emlFile") MultipartFile file) {
         try {
@@ -202,11 +204,11 @@ public class PhishingControllerAPI {
                 return ResponseEntity.badRequest().body(Map.of("error", "Il file deve essere in formato .eml"));
             }
 
-            // Estrai il contenuto dell'email
-            String emailContent = emailParserService.parseEmlFile(file);
+            // Estrai il contenuto dell'email con il nuovo metodo che restituisce una mappa
+            Map<String, Object> emailContent = emailParserService.parseEmlFile(file);
 
             // Restituisci il contenuto estratto
-            return ResponseEntity.ok(Map.of("text", emailContent));
+            return ResponseEntity.ok(emailContent);
         } catch (Exception e) {
             logger.error("Errore nell'elaborazione del file .eml", e);
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
