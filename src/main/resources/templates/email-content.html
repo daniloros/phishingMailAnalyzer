@@ -55,7 +55,9 @@
         <a href="/upload" class="btn btn-primary">Carica un'altra email</a>
     </div>
     <div class="mt-4">
-        <a href="/analyzer" class="btn btn-primary">Vai all'analyzer per classificare questa email</a>
+        <a th:href="${origin == 'comparison' ? '/comparison' : '/analyzer'}" class="btn btn-primary">
+            <span th:text="${origin == 'comparison' ? 'Vai alla comparazione per classificare questa email' : 'Vai all analyzer per classificare questa email'}"></span>
+        </a>
     </div>
 </div>
 </body>

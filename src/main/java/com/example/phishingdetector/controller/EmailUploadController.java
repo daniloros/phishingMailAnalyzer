@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Map;
 
@@ -23,12 +22,16 @@ public class EmailUploadController {
     private EmailParserService emailParserService;
 
     @GetMapping("/upload")
-    public String showUploadForm() {
+    public String showUploadForm(@RequestParam(value = "origin", required = false, defaultValue = "analyzer") String origin, Model model) {
+        model.addAttribute("origin", origin);
         return "upload-form";
     }
 
+
     @PostMapping("/upload-email")
-    public String handleEmailUpload(@RequestParam("emailFile") MultipartFile file, Model model, HttpSession session) {
+    public String handleEmailUpload(@RequestParam("emailFile") MultipartFile file,
+                                    @RequestParam(value = "origin", required = false, defaultValue = "analyzer") String origin,
+                                    Model model, HttpSession session) {
         try {
             if (file.isEmpty()) {
                 model.addAttribute("error", "Il file caricato è vuoto");
@@ -53,6 +56,7 @@ public class EmailUploadController {
             model.addAttribute("emailContent", parsedContent.get("text"));
             model.addAttribute("emailSubject", parsedContent.get("subject"));
             model.addAttribute("urls", parsedContent.get("urls"));
+            model.addAttribute("origin", origin);
 
             return "email-content";
         } catch (Exception e) {

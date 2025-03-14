@@ -16,12 +16,16 @@
 
     <div class="card mt-3">
         <div class="card-body">
-            <form method="POST" enctype="multipart/form-data" th:action="@{/upload-email}">
+            <form action="/upload-email" method="POST" enctype="multipart/form-data" th:with="origin=${param.origin != null ? param.origin[0] : 'analyzer'}">
                 <div class="mb-3">
-                    <label for="emailFile" class="form-label">Seleziona un file .eml</label>
-                    <input type="file" class="form-control" id="emailFile" name="emailFile" accept=".eml">
+                    <label for="emailFile" class="form-label">Seleziona file .eml</label>
+                    <input class="form-control" type="file" id="emailFile" name="emailFile" accept=".eml" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Estrai Contenuto</button>
+                <!-- Campo nascosto per l'origine -->
+                <input type="hidden" name="origin" th:value="${origin}">
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary">Carica</button>
+                </div>
             </form>
         </div>
     </div>
