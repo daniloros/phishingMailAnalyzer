@@ -43,6 +43,7 @@ ENV app.model.xgboost.path=/app/models/xgboost_model_test.model
 ENV app.bert.api.url=https://bert-api-696543982204.europe-west8.run.app/analyze
 ENV app.spam.words.it=/app/dataset/spamWords/it.json
 ENV app.spam.words.en=/app/dataset/spamWords/en.json
+ENV app.gemini.api.key=${GEMINI_API_KEY}
 
 # Create directory for processing feedback
 RUN mkdir -p /app/dataset/processed

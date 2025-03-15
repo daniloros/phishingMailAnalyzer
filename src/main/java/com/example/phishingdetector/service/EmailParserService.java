@@ -144,7 +144,7 @@ public class EmailParserService {
     /**
      * Estrae gli URL da testo semplice usando regex
      */
-    private List<String> extractUrlsFromText(String text) {
+    public List<String> extractUrlsFromText(String text) {
         List<String> urls = new ArrayList<>();
 
         Matcher matcher = URL_PATTERN.matcher(text);
