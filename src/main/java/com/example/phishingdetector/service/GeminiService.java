@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import javax.annotation.PostConstruct;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -26,12 +27,35 @@ public class GeminiService {
     private final HttpClient httpClient;
 
     @Value("${app.gemini.api.key}")
+    private String apiKeyFromProperties;
+
     private String apiKey;
 
     public GeminiService() {
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
+    }
+
+    @PostConstruct
+    public void init() {
+        // Prova prima a leggere direttamente dalla variabile d'ambiente
+        String envApiKey = System.getenv("GEMINI_API_KEY");
+
+        // Se disponibile dalla variabile d'ambiente, usa quella
+        if (envApiKey != null && !envApiKey.isEmpty()) {
+            this.apiKey = envApiKey;
+            logger.info("Utilizzando API key Gemini dalla variabile d'ambiente");
+        }
+        // Altrimenti usa quella dalle proprietà Spring
+        else if (apiKeyFromProperties != null && !apiKeyFromProperties.isEmpty()) {
+            this.apiKey = apiKeyFromProperties;
+            logger.info("Utilizzando API key Gemini dalle proprietà Spring");
+        }
+        // Se non è disponibile, log di warning
+        else {
+            logger.warn("Nessuna API key Gemini trovata! Le richieste API falliranno");
+        }
     }
 
     /**
@@ -46,6 +70,12 @@ public class GeminiService {
     public CompletableFuture<String> analyzeEmailWithGemini(String emailContent, List<String> urls,
                                                             boolean classification, String classifier) {
         try {
+            if (apiKey == null || apiKey.isEmpty()) {
+                CompletableFuture<String> future = new CompletableFuture<>();
+                future.complete("Errore: API key di Gemini non configurata");
+                return future;
+            }
+
             String prompt = buildPrompt(emailContent, urls, classification, classifier);
 
             // Costruisce il payload JSON per l'API Gemini
@@ -59,6 +89,10 @@ public class GeminiService {
             ArrayNode contentsArray = objectMapper.createArrayNode();
             contentsArray.add(contentNode);
             requestBody.set("contents", contentsArray);
+
+            logger.debug("Chiamata a Gemini API con chiave che inizia con: {}",
+                    apiKey.substring(0, Math.min(5, apiKey.length())) + "...");
+
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(GEMINI_API_ENDPOINT + "?key=" + apiKey))
