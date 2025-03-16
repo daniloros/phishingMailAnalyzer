@@ -100,4 +100,28 @@ public class GeminiControllerAPI {
             ));
         }
     }
+
+   @GetMapping("/test")
+    public ResponseEntity<?> testGeminiApiKey() {
+       logger.info("Gemini API: {}", "Call TEST GEMINI");
+        String apiKey = System.getenv("GEMINI_API_KEY");
+       logger.info("Gemini API: {}", apiKey);
+
+        if (apiKey == null || apiKey.isEmpty()) {
+            return ResponseEntity.status(500).body(Map.of(
+                    "status", "error",
+                    "message", "API key not found in environment variables"
+            ));
+        }
+
+        // Non stampare l'API key completa nei log, solo i primi caratteri
+        String maskedKey = apiKey.substring(0, 5) + "...";
+        logger.info("Gemini API key found: {}", maskedKey);
+
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "API key is configured",
+                "keyFirstChars", apiKey.substring(0, 5)
+        ));
+    }
 }
