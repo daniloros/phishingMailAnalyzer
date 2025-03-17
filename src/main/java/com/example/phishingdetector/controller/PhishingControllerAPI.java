@@ -4,6 +4,7 @@ import com.example.phishingdetector.dto.ComparisonResponse;
 import com.example.phishingdetector.dto.EmailRequest;
 import com.example.phishingdetector.dto.EmailResponse;
 import com.example.phishingdetector.dto.FeedbackRequest;
+import com.example.phishingdetector.service.EmailParserService;
 import com.example.phishingdetector.service.PhishingDetectionService;
 import model.PhishingResult;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,6 +25,9 @@ public class PhishingControllerAPI {
 
     @Autowired
     private PhishingDetectionService detectionService;
+
+    @Autowired
+    private EmailParserService emailParserService;
 
     private Map<String, PhishingResult> resultCache = new HashMap<>();
 
@@ -183,6 +188,35 @@ public class PhishingControllerAPI {
             logger.error("Errore durante il salvataggio del feedback", e);
             return ResponseEntity.internalServerError().body(Map.of("status", "error", "message", e.getMessage()));
         }
+    }
+
+
+    //TODO: da eliminare, sotituito con l'EmailUploadController
+    @PostMapping("/upload-eml")
+    public ResponseEntity<?> handleEmlUpload(@RequestParam("emlFile") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Il file è vuoto"));
+            }
+
+            String fileName = file.getOriginalFilename();
+            if (fileName == null || !fileName.toLowerCase().endsWith(".eml")) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Il file deve essere in formato .eml"));
+            }
+
+            // Estrai il contenuto dell'email con il nuovo metodo che restituisce una mappa
+            Map<String, Object> emailContent = emailParserService.parseEmlFile(file);
+
+            // Restituisci il contenuto estratto
+            return ResponseEntity.ok(emailContent);
+        } catch (Exception e) {
+            logger.error("Errore nell'elaborazione del file .eml", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    public PhishingResult getResultFromCache(String resultId) {
+        return resultCache.get(resultId);
     }
 
     private String summarizeFeatures(float[] embedding) {

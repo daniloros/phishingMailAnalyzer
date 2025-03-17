@@ -4,85 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${pageTitle}">Phishing Detection System</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <style>
-        .header {
-            background-color: #f8f9fa;
-            padding: 20px 0;
-            margin-bottom: 20px;
-        }
-        .footer {
-            background-color: #f8f9fa;
-            padding: 20px 0;
-            margin-top: 30px;
-            text-align: center;
-            font-size: 14px;
-            color: #666;
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-        }
-        .jumbotron {
-            padding: 2rem 1rem;
-            margin-bottom: 2rem;
-            background-color: #e9ecef;
-            border-radius: .3rem;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="header">
-    <div class="container">
-        <div class="row">
-            <div class="col">
-                <h1>Phishing Detection System</h1>
-                <nav class="navbar navbar-expand-lg navbar-light bg-light">
-                    <div class="container-fluid">
-                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
-                        <div class="collapse navbar-collapse" id="navbarNav">
-                            <ul class="navbar-nav">
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/">Home</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/analyzer">Email Analyzer</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/comparison">Classifiers Comparison</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </nav>
-            </div>
-        </div>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<div class="container">
+    <a class="navbar-brand" href="/">Phishing Detection System</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" href="/analyzer">Analizza Mail</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/comparison">Confronta Classificatori</a>
+            </li>
+        </ul>
     </div>
 </div>
+</nav>
 
 <div class="container">
     <div class="jumbotron">
-        <h1 class="display-4">Welcome to Phishing Detection System</h1>
-        <p class="lead">This system uses advanced machine learning techniques to detect phishing emails.</p>
+        <h1 class="display-4">Benvenuto</h1>
+        <p class="lead">Questo sistema usa tecniche di machine learning per fare detect di email di phishing</p>
         <hr class="my-4">
-        <p>Choose one of the options below to start analyzing emails.</p>
+        <p>Scegli un opzione per iniziare ad analizzare la tua mail.</p>
         <div class="row mt-4">
             <div class="col-md-6">
                 <div class="card mb-4">
                     <div class="card-body">
-                        <h5 class="card-title">Email Analyzer</h5>
-                        <p class="card-text">Analyze emails using one of our three machine learning models: Random Forest, SVM, or XGBoost.</p>
-                        <a href="/analyzer" class="btn btn-primary">Go to Analyzer</a>
+                        <h5 class="card-title">Analizza Email</h5>
+                        <p class="card-text">Analizza la tua mail usando uno dei tre modelli di machine learning: Random Forest, SVM, or XGBoost.</p>
+                        <a href="/analyzer" class="btn btn-primary">Prosegui con l'analisi</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="card mb-4">
                     <div class="card-body">
-                        <h5 class="card-title">Classifiers Comparison</h5>
-                        <p class="card-text">Compare the results of all three classifiers on the same email to see which performs better.</p>
-                        <a href="/comparison" class="btn btn-primary">Compare Classifiers</a>
+                        <h5 class="card-title">Confronta i classificatori</h5>
+                        <p class="card-text">La tua mail sarà analizzata da tutti e tre i classificatori, visualizza il risultato ottenuto dai tre.</p>
+                        <a href="/comparison" class="btn btn-primary">Prosegui con il confronto</a>
                     </div>
                 </div>
             </div>
@@ -90,11 +56,11 @@
     </div>
 </div>
 
-<footer class="footer">
-    <div class="container">
-        <p>&copy; 2025 Phishing Detection System</p>
-    </div>
-</footer>
+<!--<footer class="footer">-->
+<!--    <div class="container">-->
+<!--        <p>&copy; 2025 Phishing Detection System</p>-->
+<!--    </div>-->
+<!--</footer>-->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

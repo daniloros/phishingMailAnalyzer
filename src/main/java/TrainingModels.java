@@ -1,9 +1,8 @@
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import model.TrainingEmail;
-import rf_classifier.RFPhishingDetectionSystem;
-import svm_classifier.SVMPhishingDetectionSystem;
-import xgboost_classifier.XGBoostPhishingDetectionSystem;
+import controller.EmailFeatureProcessor;
+import model.ProcessedEmailForJSON;
+import rf_classifier.RFPhishingClassifier;
+import svm_classifier.SVMPhishingClassifier;
+import xgboost_classifier.XGBoostPhishingClassifier;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -12,60 +11,68 @@ import java.util.List;
 public class TrainingModels {
     public static void main(String[] args) {
         try {
-            // Configurazione
-//            String umbertoApiUrl = "http://localhost:8000/analyze";
+            // Configuration
             String datasetPath = "src/main/resources/dataset/processed";
             String inputJsonPath = "src/main/resources/dataset/emails_sentiment.json";
 
-            // Random Forest
-            RFPhishingDetectionSystem system = new RFPhishingDetectionSystem(datasetPath);
+            System.out.println("Starting improved training pipeline...");
 
-            //SVM
-            SVMPhishingDetectionSystem svmSystem = new SVMPhishingDetectionSystem(datasetPath);
+            // Step 1: Process all emails once
+            EmailFeatureProcessor processor = new EmailFeatureProcessor(datasetPath);
 
-            //XGBoost
-            XGBoostPhishingDetectionSystem xgboostSystem = new XGBoostPhishingDetectionSystem(datasetPath);
-
-            // Leggi il JSON originale
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(new File(inputJsonPath));
-            JsonNode emails = root.get("emails");
-
-            // Converti nel formato atteso dal sistema
-            List<TrainingEmail> trainingEmails = new ArrayList<>();
-
-            for (JsonNode email : emails) {
-                TrainingEmail trainingEmail = new TrainingEmail();
-                trainingEmail.setText(email.get("text").asText());
-                trainingEmail.setPhishing(email.get("type").asText().toLowerCase().contains("phishing"));
-                trainingEmail.setSentimentMagnitude(Float.parseFloat(email.get("metadata").get("sentiment_magnitude").asText()));
-                trainingEmail.setSentimentScore(Float.parseFloat(email.get("metadata").get("sentiment_score").asText()));
-                trainingEmails.add(trainingEmail);
+            // Check if processed file already exists
+            File processedFile = new File(datasetPath + "/unified_processed_emails.json");
+            if (!processedFile.exists()) {
+                System.out.println("Processing emails and extracting features...");
+                processor.processEmails(inputJsonPath);
+            } else {
+                System.out.println("Using existing processed email features...");
             }
 
-            // Salva le email convertite in un formato temporaneo
-            String tempJsonPath = "temp_training_data.json";
-            mapper.writeValue(new File(tempJsonPath), trainingEmails);
+            // Step 2: Load the processed data
+            List<ProcessedEmailForJSON> processedEmails = processor.loadProcessedEmails();
+            System.out.println("Loaded " + processedEmails.size() + " processed emails");
 
-//             Processa le email e addestra il modello
-            System.out.println("Training Random Forest...");
-            system.trainFromFile(tempJsonPath);
-            // Salva il modello addestrato
-            system.saveModel("rf_model_test_new.model");
+            // Step 3: Prepare data for training (same data for all classifiers)
+            List<float[]> embeddings = new ArrayList<>();
+            List<Boolean> labels = new ArrayList<>();
 
+            for (ProcessedEmailForJSON email : processedEmails) {
+                embeddings.add(email.getEmbedding());
+                labels.add(email.isPhishing());
+            }
+
+            // Step 4: Train all models using the same processed data
+
+            // Train Random Forest
+            System.out.println("\nTraining Random Forest...");
+            RFPhishingClassifier rfClassifier = new RFPhishingClassifier();
+            rfClassifier.train(embeddings, labels);
+            rfClassifier.evaluate(embeddings, labels);
+            rfClassifier.saveModel("rf_model_test_march.model");
+            System.out.println("Random Forest model saved successfully");
+
+            // Train SVM
             System.out.println("\nTraining SVM...");
-            svmSystem.trainFromFile(tempJsonPath);
-            svmSystem.saveModel("svm_model_test.model");
+            SVMPhishingClassifier svmClassifier = new SVMPhishingClassifier();
+            svmClassifier.train(embeddings, labels);
+            svmClassifier.evaluate(embeddings, labels);
+            svmClassifier.saveModel("svm_model_test_march.model");
+            System.out.println("SVM model saved successfully");
 
+            // Train XGBoost
             System.out.println("\nTraining XGBoost...");
-            xgboostSystem.trainFromFile(tempJsonPath);
-            xgboostSystem.saveModel("xgboost_model_test.model");
+            XGBoostPhishingClassifier xgbClassifier = new XGBoostPhishingClassifier();
+            xgbClassifier.train(embeddings, labels);
+            xgbClassifier.evaluate(embeddings, labels);
+            xgbClassifier.saveModel("xgboost_model_march.model");
+            System.out.println("XGBoost model saved successfully");
 
-            System.out.println("Elaborazione completata!");
+            System.out.println("\nAll models trained and saved successfully!");
 
         } catch (Exception e) {
+            System.err.println("Error during training process:");
             e.printStackTrace();
         }
-
     }
 }

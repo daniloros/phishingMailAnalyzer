@@ -3,286 +3,483 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle}">Email Analyzer</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title th:text="${pageTitle}">Analizza Mail</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
     <style>
-        .header {
-            background-color: #f8f9fa;
-            padding: 20px 0;
-            margin-bottom: 20px;
-        }
-
-        .footer {
-            background-color: #f8f9fa;
-            padding: 20px 0;
-            margin-top: 30px;
-            text-align: center;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .result-card {
-            margin-top: 20px;
-            display: none;
-        }
-
-        .phishing {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .legitimate {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .spinner-border {
-            display: none;
-        }
-
-        textarea {
-            resize: vertical;
+        .text-pre-wrap {
+            white-space: pre-wrap;
         }
     </style>
 </head>
 <body>
-<div class="header">
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
-        <div class="row">
-            <div class="col">
-                <h1>Email Analyzer</h1>
-                <nav class="navbar navbar-expand-lg navbar-light bg-light">
-                    <div class="container-fluid">
-                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
-                                aria-label="Toggle navigation">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
-                        <div class="collapse navbar-collapse" id="navbarNav">
-                            <ul class="navbar-nav">
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/">Home</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link active" href="/analyzer">Email Analyzer</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/comparison">Classifiers Comparison</a>
-                                </li>
-                            </ul>
-                        </div>
+        <a class="navbar-brand" href="/">Phishing Detection System</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/analyzer">Analizza Mail</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/comparison">Confronta Classificatori</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Main content -->
+<div class="container mt-4">
+    <h1 class="mb-4">Email Analyzer</h1>
+
+    <!-- Opzioni per l'analisi dell'email -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Scegli come analizzare l'email</h4>
+        </div>
+        <div class="card-body">
+            <p>Seleziona una delle seguenti opzioni:</p>
+            <div class="d-flex gap-3 mb-4">
+                <a href="/upload?origin=analyzer" class="btn btn-primary">Carica file .eml</a>
+                <button class="btn btn-secondary" id="showManualInput" onclick="toggleManualInput()">Inserisci testo manualmente</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sezione per visualizzare i dettagli dell'email (se disponibili) -->
+    <div id="emailDetailsSection" th:if="${emailContent != null and !emailContent.isEmpty()}">
+        <!-- URL trovati nell'email -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>URL trovati nell'email</h4>
+            </div>
+            <div class="card-body">
+                <div id="urlListDisplay">
+                    <div th:if="${urls != null and !urls.empty}">
+                        <ul class="list-group" id="urlsList">
+                            <li th:each="url : ${urls}" class="list-group-item">
+                                <a th:href="${url.startsWith('http') ? url : 'http://' + url}" target="_blank" th:text="${url}">URL</a>
+                            </li>
+                        </ul>
                     </div>
-                </nav>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Analyze Email for Phishing</h5>
-                </div>
-                <div class="card-body">
-                    <form id="emailForm">
-                        <div class="mb-3">
-                            <label for="emailText" class="form-label">Email Text</label>
-                            <textarea class="form-control" id="emailText" rows="10" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="classifier" class="form-label">Classifier</label>
-                            <select class="form-select" id="classifier">
-                                <option value="rf">Random Forest</option>
-                                <option value="svm">SVM</option>
-                                <option value="xgboost">XGBoost</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary" id="analyzeBtn">
-                                <span class="spinner-border spinner-border-sm" id="spinner" role="status"
-                                      aria-hidden="true"></span>
-                            Analyze
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card result-card" id="resultCard">
-                <div class="card-header" id="resultHeader">
-                    <h5>Analysis Result</h5>
-                </div>
-                <div class="card-body">
-                    <h5 class="card-title" id="resultTitle">Phishing Detection</h5>
-                    <p class="card-text" id="resultText"></p>
-                    <p class="card-text"><strong>Classifier:</strong> <span id="resultClassifier"></span></p>
-                    <p class="card-text"><strong>Tokens:</strong> <span id="resultTokens"></span></p>
-                    <p class="card-text"><strong>Features:</strong> <span id="resultFeatures"></span></p>
-
-                    <div class="mt-4" id="feedbackSection">
-                        <h6>Was this prediction correct?</h6>
-                        <button class="btn btn-success me-2" id="correctBtn">Yes, correct</button>
-                        <button class="btn btn-danger" id="incorrectBtn">No, incorrect</button>
+                    <div id="noUrlsFound" th:if="${urls == null or urls.empty}" class="alert alert-info">
+                        Nessun URL trovato in questa email.
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Form di analisi dell'email (per input manuale) -->
+    <div id="manualInputSection">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Analisi Email</h4>
+            </div>
+            <div class="card-body">
+                <form id="emailForm">
+                    <div class="mb-3">
+                        <label for="emailText" class="form-label">Testo dell'email</label>
+                        <textarea th:attr="disabled=${emailContent != null and !emailContent.isEmpty()}"
+                                  class="form-control" id="emailText" rows="10" required th:text="${emailContent}"></textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Classificatore</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="classifier" id="rf" value="rf" checked>
+                    <label class="form-check-label" for="rf">Random Forest</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="classifier" id="svm" value="svm">
+                    <label class="form-check-label" for="svm">SVM</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="classifier" id="xgboost" value="xgboost">
+                    <label class="form-check-label" for="xgboost">XGBoost</label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" onclick="analyzeEmail(event)">Analizza</button>
+            <div id="loadingSpinner" class="mt-3 text-center" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Analisi in corso...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risultati dell'analisi -->
+    <div id="resultSection" style="display: none;">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>Risultato Analisi</h4>
+                <span id="resultBadge" class="badge rounded-pill"></span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Dettagli:</h5>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Classificatore
+                                <span id="classifierName"></span>
+                            </li>
+                            <li id="resultItem" class="list-group-item d-flex justify-content-between align-items-center">
+                                Risultato
+                                <span id="resultLabel" class="fw-bold"></span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Feedback:</h5>
+                        <p>Questa previsione è corretta?</p>
+                        <div class="d-flex">
+                            <button id="feedbackYes" class="btn btn-outline-success me-2">Sì</button>
+                            <button id="feedbackNo" class="btn btn-outline-danger">No</button>
+                        </div>
+                        <div id="feedbackMessage" class="alert mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Pulsante per l'analisi Gemini -->
+                <div class="mt-4 border-top pt-3">
+                    <h5>Analisi AI avanzata:</h5>
+                    <p>Richiedi un'analisi dettagliata dell'email utilizzando l'intelligenza artificiale</p>
+                    <button id="geminiAnalyzeBtn" class="btn btn-outline-primary" onclick="requestGeminiAnalysis()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16" style="margin-right: 5px;">
+                            <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828l.645-1.937zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.734 1.734 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.734 1.734 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.734 1.734 0 0 0 3.407 2.31l.387-1.162zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L10.863.1z"/>
+                        </svg>
+                        Analizza con AI
+                    </button>
+                </div>
+
+                <!-- Sezione per l'analisi di Gemini (mostrata dopo la richiesta) -->
+                <div id="geminiAnalysisSection" style="display: none;" class="mt-3">
+                    <div id="geminiLoadingIndicator" class="text-center p-3" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Elaborazione in corso...</span>
+                        </div>
+                        <p class="mt-2">Generazione analisi in corso...</p>
+                    </div>
+                    <div id="geminiAnalysisContent" class="card bg-light">
+                        <div class="card-header">
+                            <h5 class="mb-0">Analisi AI</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="geminiAnalysisText" class="text-pre-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<footer class="footer mt-5">
-    <div class="container">
-        <p>&copy; 2025 Phishing Detection System</p>
-    </div>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const emailForm = document.getElementById('emailForm');
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        const spinner = document.getElementById('spinner');
-        const resultCard = document.getElementById('resultCard');
-        const resultHeader = document.getElementById('resultHeader');
-        const resultTitle = document.getElementById('resultTitle');
-        const resultText = document.getElementById('resultText');
-        const resultClassifier = document.getElementById('resultClassifier');
-        const resultTokens = document.getElementById('resultTokens');
-        const resultFeatures = document.getElementById('resultFeatures');
-        const correctBtn = document.getElementById('correctBtn');
-        const incorrectBtn = document.getElementById('incorrectBtn');
+    function toggleManualInput() {
+        const manualSection = document.getElementById('manualInputSection');
+        manualSection.style.display = manualSection.style.display === 'none' ? 'block' : 'none';
+    }
 
-        let lastResult = null;
+    function initializeManualSection() {
+        const manualSection = document.getElementById('manualInputSection');
+        const emailContent = document.getElementById('emailText').value;
 
-        emailForm.addEventListener('submit', function (e) {
-            e.preventDefault();
+        if (emailContent.trim() !== '') {
+            manualSection.style.display = 'block';
+        } else {
+            manualSection.style.display = 'none';
+        }
+    }
 
-            const emailText = document.getElementById('emailText').value;
-            const classifier = document.getElementById('classifier').value;
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeManualSection();
+    });
 
-            if (!emailText) {
-                alert('Please enter email text to analyze');
-                return;
-            }
+    // Funzione per visualizzare i risultati
+    function displayResults(data) {
+        // Mostra la sezione dei risultati
+        const resultSection = document.getElementById('resultSection');
+        resultSection.style.display = 'block';
 
-            // Reset UI
-            resultCard.style.display = 'none';
-            analyzeBtn.disabled = true;
-            spinner.style.display = 'inline-block';
+        // Nascondi la sezione di analisi Gemini
+        const geminiSection = document.getElementById('geminiAnalysisSection');
+        geminiSection.style.display = 'none';
 
-            // Determine endpoint based on classifier
-            let endpoint = '/api/analyze/';
-            switch (classifier) {
-                case 'rf':
-                    endpoint += 'rf';
-                    break;
-                case 'svm':
-                    endpoint += 'svm';
-                    break;
-                case 'xgboost':
-                    endpoint += 'xgboost';
-                    break;
-            }
+        // Aggiorna il badge del risultato
+        const resultBadge = document.getElementById('resultBadge');
+        if (data.phishing) {
+            resultBadge.textContent = 'PHISHING';
+            resultBadge.className = 'badge rounded-pill bg-danger';
+        } else {
+            resultBadge.textContent = 'LEGITTIMA';
+            resultBadge.className = 'badge rounded-pill bg-success';
+        }
 
-            // Make API request
-            fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({text: emailText})
+        // Aggiorna i dettagli
+        document.getElementById('classifierName').textContent = data.classifier;
+
+        const resultItem = document.getElementById('resultItem');
+        const resultLabel = document.getElementById('resultLabel');
+
+        if (data.phishing) {
+            resultLabel.textContent = 'PHISHING';
+            resultItem.classList.add('list-group-item-danger');
+            resultItem.classList.remove('list-group-item-success');
+        } else {
+            resultLabel.textContent = 'LEGITTIMA';
+            resultItem.classList.add('list-group-item-success');
+            resultItem.classList.remove('list-group-item-danger');
+        }
+
+        // Configura i pulsanti di feedback
+        setupFeedbackButtons(data);
+
+        // Memorizza i dati di classificazione come attributi del pulsante Gemini per un facile accesso
+        const geminiBtn = document.getElementById('geminiAnalyzeBtn');
+        console.log("Data:", data)
+        geminiBtn.dataset.emailText = data.text;
+        geminiBtn.dataset.classification = data.phishing;
+        geminiBtn.dataset.classifier = data.classifier;
+        geminiBtn.dataset.resultId = data.resultId;
+        geminiBtn.disabled = false;
+    }
+
+    function analyzeEmail(e) {
+        e.preventDefault();
+
+        const emailText = document.getElementById('emailText').value;
+        if (!emailText) {
+            alert('Inserisci il testo dell\'email');
+            return;
+        }
+
+        // Ottieni il classificatore selezionato
+        const classifier = document.querySelector('input[name="classifier"]:checked').value;
+
+        // Prepara i dati per l'API
+        const requestData = {
+            text: emailText
+        };
+
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        loadingSpinner.style.display = 'block';
+
+        loadingSpinner.scrollIntoView({ behavior: 'smooth' });
+
+        // Effettua la richiesta all'API
+        fetch(`/api/analyze/${classifier}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Errore durante l\'analisi');
+                }
+                return response.json();
             })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    lastResult = data;
+            .then(data => {
+                // Visualizza i risultati
+                displayResults(data);
+                loadingSpinner.style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                loadingSpinner.style.display = 'none';
+                alert('Errore durante l\'analisi: ' + error.message);
+            });
+    }
 
-                    // Update result card
-                    resultClassifier.textContent = data.classifier;
-                    resultTokens.textContent = data.numTokens;
-                    resultFeatures.textContent = data.features;
+    // Configura i pulsanti di feedback
+    function setupFeedbackButtons(data) {
+        const yesBtn = document.getElementById('feedbackYes');
+        const noBtn = document.getElementById('feedbackNo');
+        const feedbackMessage = document.getElementById('feedbackMessage');
 
-                    if (data.phishing) {
-                        resultHeader.className = 'card-header bg-danger text-white';
-                        resultTitle.textContent = 'Phishing Detected';
-                        resultText.textContent = 'This email appears to be a phishing attempt!';
-                    } else {
-                        resultHeader.className = 'card-header bg-success text-white';
-                        resultTitle.textContent = 'Legitimate Email';
-                        resultText.textContent = 'This email appears to be legitimate.';
-                    }
+        // Ripristina lo stato dei pulsanti
+        yesBtn.disabled = false;
+        noBtn.disabled = false;
+        feedbackMessage.style.display = 'none';
 
-                    // Show result
-                    resultCard.style.display = 'block';
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while analyzing the email.');
-                })
-                .finally(() => {
-                    // Reset UI
-                    analyzeBtn.disabled = false;
-                    spinner.style.display = 'none';
-                });
-        });
+        // Aggiungi handler per il pulsante Sì (conferma la previsione)
+        yesBtn.onclick = function() {
+            console.log("data phishing YES:", data.phishing);
+            sendFeedback(data, data.phishing);
+        };
 
-        // Handle feedback buttons
-        correctBtn.addEventListener('click', function () {
-            if (lastResult) {
-                sendFeedback(lastResult.text, lastResult.phishing, lastResult.classifier, lastResult.resultId);
-            }
-        });
+        // Aggiungi handler per il pulsante No (inverte la previsione)
+        noBtn.onclick = function() {
+            console.log("data phishing NO:", data.phishing);
+            sendFeedback(data, !data.phishing);
+        };
 
-        incorrectBtn.addEventListener('click', function () {
-            if (lastResult) {
-                sendFeedback(lastResult.text, !lastResult.phishing, lastResult.classifier, lastResult.resultId);
-            }
-        });
+        // Funzione per inviare il feedback
+        function sendFeedback(data, userFeedback) {
+            // Disabilita entrambi i pulsanti durante l'invio
+            yesBtn.disabled = true;
+            noBtn.disabled = true;
 
-        function sendFeedback(emailText, userFeedback, classifier, resultId) {
-            // Determine classifier code
-            let classifierCode = 'rf';
-            if (classifier === 'SVM') {
-                classifierCode = 'svm';
-            } else if (classifier === 'XGBoost') {
-                classifierCode = 'xgboost';
-            }
+            // Mostra un indicatore di caricamento
+            feedbackMessage.className = 'alert alert-info mt-3';
+            feedbackMessage.textContent = 'Invio feedback in corso...';
+            feedbackMessage.style.display = 'block';
 
+            // Prepara i dati per l'API
+            const feedbackData = {
+                emailText: data.text,
+                userFeedback: userFeedback,
+                classifier: data.classifier,
+                resultId: data.resultId
+            };
+
+            // Effettua la richiesta all'API
             fetch('/api/feedback', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    emailText: emailText,
-                    userFeedback: userFeedback,
-                    classifier: classifierCode,
-                    resultId: resultId
-                })
+                body: JSON.stringify(feedbackData)
             })
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                        throw new Error('Errore durante l\'invio del feedback');
                     }
                     return response.json();
                 })
-                .then(data => {
-                    alert('Thank you for your feedback!');
+                .then(response => {
+                    // Mostra il messaggio di successo
+                    feedbackMessage.className = 'alert alert-success mt-3';
+                    feedbackMessage.textContent = 'Grazie per il tuo feedback!';
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while submitting feedback.');
+                    console.error('Errore:', error);
+
+                    // Riabilita i pulsanti in caso di errore
+                    yesBtn.disabled = false;
+                    noBtn.disabled = false;
+
+                    // Mostra il messaggio di errore
+                    feedbackMessage.className = 'alert alert-danger mt-3';
+                    feedbackMessage.textContent = 'Errore durante l\'invio del feedback: ' + error.message;
                 });
         }
-    });
+    }
+
+    // Funzione per richiedere l'analisi Gemini
+    function requestGeminiAnalysis() {
+        const geminiBtn = document.getElementById('geminiAnalyzeBtn');
+        const geminiSection = document.getElementById('geminiAnalysisSection');
+        const geminiLoading = document.getElementById('geminiLoadingIndicator');
+        const geminiContent = document.getElementById('geminiAnalysisContent');
+        const geminiText = document.getElementById('geminiAnalysisText');
+
+        // Ottieni i dati memorizzati nel pulsante
+        const emailText = geminiBtn.dataset.emailText;
+        const classification = geminiBtn.dataset.classification === 'true';
+        const classifier = geminiBtn.dataset.classifier;
+        const resultId = geminiBtn.dataset.resultId;
+
+        if (!emailText) {
+            alert('Nessun contenuto email disponibile da analizzare');
+            return;
+        }
+
+        // Raccogli gli URL dal DOM se disponibili
+        const urls = [];
+        const urlsList = document.getElementById('urlsList');
+        if (urlsList) {
+            const linkElements = urlsList.querySelectorAll('li a');
+            linkElements.forEach(link => {
+                urls.push(link.textContent);
+            });
+            console.log("Raccolti", urls.length, "URL dal DOM per l'analisi Gemini");
+        } else {
+            console.log("Nessun URL trovato nel DOM, verranno estratti dal testo");
+        }
+
+        // Disabilita il pulsante durante l'analisi
+        geminiBtn.disabled = true;
+
+        // Mostra la sezione di analisi con l'indicatore di caricamento
+        geminiSection.style.display = 'block';
+        geminiLoading.style.display = 'block';
+        geminiContent.style.display = 'none';
+
+        // Scorri alla sezione di analisi
+        geminiSection.scrollIntoView({ behavior: 'smooth' });
+
+        // Prepara i dati per l'API
+        const requestData = {
+            emailText: emailText,
+            classification: classification,
+            classifier: classifier,
+            resultId: resultId,
+            urls: urls // Includi gli URL raccolti dal DOM
+        };
+
+        // Effettua la richiesta all'API Gemini
+        fetch('/api/gemini/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Errore durante l\'analisi con Gemini');
+                }
+                return response.json();
+            })
+            .then(response => {
+                // Nascondi l'indicatore di caricamento
+                geminiLoading.style.display = 'none';
+
+                // Mostra il contenuto dell'analisi
+                geminiContent.style.display = 'block';
+
+                // Formatta e visualizza l'analisi
+                if (response.status === 'success' && response.analysis) {
+                    geminiText.innerHTML = response.analysis.replace(/\n/g, '<br>');
+                } else {
+                    geminiText.innerHTML = 'Non è stato possibile ottenere un\'analisi completa.';
+                    if (response.message) {
+                        geminiText.innerHTML += '<br><br>Dettagli: ' + response.message;
+                    }
+                }
+
+                // Riabilita il pulsante
+                geminiBtn.disabled = false;
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+
+                // Nascondi l'indicatore di caricamento
+                geminiLoading.style.display = 'none';
+
+                // Mostra il messaggio di errore
+                geminiContent.style.display = 'block';
+                geminiText.innerHTML = 'Errore durante l\'analisi: ' + error.message;
+
+                // Riabilita il pulsante
+                geminiBtn.disabled = false;
+            });
+    }
 </script>
 </body>
 </html>

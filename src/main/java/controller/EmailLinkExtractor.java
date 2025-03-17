@@ -8,11 +8,11 @@ import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class EmailFeatureExtractor {
+public class EmailLinkExtractor {
     private String emailText;
 
 
-    public EmailFeatureExtractor(String emailText) {
+    public EmailLinkExtractor(String emailText) {
         this.emailText = emailText;
     }
 
