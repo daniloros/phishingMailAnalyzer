@@ -2,6 +2,7 @@ package com.example.phishingdetector.controller;
 
 import com.example.phishingdetector.service.EmailParserService;
 import com.example.phishingdetector.service.GeminiService;
+import model.PhishingResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ public class GeminiControllerAPI {
     @Autowired
     private EmailParserService emailParserService;
 
+    @Autowired
+    private PhishingControllerAPI phishingControllerAPI;
+
     @PostMapping("/analyze")
     public ResponseEntity<?> analyzeWithGemini(@RequestBody Map<String, Object> request) {
         try {
@@ -35,6 +39,9 @@ public class GeminiControllerAPI {
             Boolean classification = (Boolean) request.get("classification");
             String classifier = (String) request.get("classifier");
 
+            String resultId = request.containsKey("resultId") ? (String) request.get("resultId") : null;
+
+
             // Verifica che i parametri obbligatori siano presenti
             if (emailContent == null || classification == null || classifier == null) {
                 return ResponseEntity.badRequest().body(Map.of(
@@ -42,6 +49,18 @@ public class GeminiControllerAPI {
                         "message", "Parametri mancanti: emailText, classification e classifier sono richiesti"
                 ));
             }
+
+            float[] embedding = null;
+            if (resultId != null && !resultId.isEmpty()) {
+                // Accedi alla cache dei risultati nel PhishingControllerAPI
+                PhishingResult cachedResult = phishingControllerAPI.getResultFromCache(resultId);
+                if (cachedResult != null) {
+                    embedding = cachedResult.getEmbedding();
+                    logger.info("Recuperato embedding di dimensione {} dal resultId {}",
+                            embedding != null ? embedding.length : 0, resultId);
+                }
+            }
+
 
             // Ottieni la lista di URL dalla richiesta se fornita
             List<String> providedUrls = null;
@@ -67,7 +86,8 @@ public class GeminiControllerAPI {
                     emailContent,
                     urls,
                     classification,
-                    classifier
+                    classifier,
+                    embedding
             );
 
             // Attendiamo la risposta di Gemini con un timeout
@@ -99,29 +119,5 @@ public class GeminiControllerAPI {
                     "message", "Errore durante l'analisi: " + e.getMessage()
             ));
         }
-    }
-
-   @GetMapping("/test")
-    public ResponseEntity<?> testGeminiApiKey() {
-       logger.info("Gemini API: {}", "Call TEST GEMINI");
-        String apiKey = System.getenv("GEMINI_API_KEY");
-       logger.info("Gemini API: {}", apiKey);
-
-        if (apiKey == null || apiKey.isEmpty()) {
-            return ResponseEntity.status(500).body(Map.of(
-                    "status", "error",
-                    "message", "API key not found in environment variables"
-            ));
-        }
-
-        // Non stampare l'API key completa nei log, solo i primi caratteri
-        String maskedKey = apiKey.substring(0, 5) + "...";
-        logger.info("Gemini API key found: {}", maskedKey);
-
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "message", "API key is configured",
-                "keyFirstChars", apiKey.substring(0, 5)
-        ));
     }
 }

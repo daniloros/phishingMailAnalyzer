@@ -48,7 +48,7 @@ public class SVMPhishingDetectionSystem {
         // Classifichiamo usando SVM
         boolean isPhishing = classifier.classify(combinedFeature);
 
-        return new PhishingResult(emailText, isPhishing, embedding, emailFromBert.getNum_tokens());
+        return new PhishingResult(emailText, isPhishing, combinedFeature, emailFromBert.getNum_tokens());
     }
 
     /**

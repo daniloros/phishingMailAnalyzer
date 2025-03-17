@@ -302,8 +302,6 @@
 
     // Funzione per visualizzare i risultati del confronto
     function displayComparisonResults(data) {
-        console.log("Dati risultati confronto:", data);
-
         // Mostra la sezione dei risultati
         const resultSection = document.getElementById('resultSection');
         resultSection.style.display = 'block';
@@ -326,16 +324,19 @@
         rfBtn.dataset.emailText = data.emailText;
         rfBtn.dataset.classification = data.rfPrediction;
         rfBtn.dataset.classifier = 'Random Forest';
+        rfBtn.dataset.resultId = data.rfResultId;
         rfBtn.disabled = false;
 
         svmBtn.dataset.emailText = data.emailText;
         svmBtn.dataset.classification = data.svmPrediction;
         svmBtn.dataset.classifier = 'SVM';
+        svmBtn.dataset.resultId = data.svmResultId;
         svmBtn.disabled = false;
 
         xgboostBtn.dataset.emailText = data.emailText;
         xgboostBtn.dataset.classification = data.xgboostPrediction;
         xgboostBtn.dataset.classifier = 'XGBoost';
+        xgboostBtn.dataset.resultId = data.xgboostResultId;
         xgboostBtn.disabled = false;
     }
 
@@ -464,6 +465,7 @@
         const emailText = geminiBtn.dataset.emailText;
         const classification = geminiBtn.dataset.classification === 'true';
         const classifierName = geminiBtn.dataset.classifier;
+        const resultId = geminiBtn.dataset.resultId;
 
         if (!emailText) {
             alert('Nessun contenuto email disponibile da analizzare');
@@ -478,7 +480,6 @@
             linkElements.forEach(link => {
                 urls.push(link.textContent);
             });
-            console.log("Raccolti", urls.length, "URL dal DOM per l'analisi Gemini");
         } else {
             console.log("Nessun URL trovato nel DOM, verranno estratti dal testo");
         }
@@ -504,7 +505,8 @@
             emailText: emailText,
             classification: classification,
             classifier: classifierName,
-            urls: urls // Includi gli URL raccolti dal DOM
+            urls: urls,
+            resultId: resultId
         };
 
         // Effettua la richiesta all'API Gemini

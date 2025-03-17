@@ -252,8 +252,8 @@
         console.log("Data:", data)
         geminiBtn.dataset.emailText = data.text;
         geminiBtn.dataset.classification = data.phishing;
-        console.log("dataset.classification:", data.phishing);
         geminiBtn.dataset.classifier = data.classifier;
+        geminiBtn.dataset.resultId = data.resultId;
         geminiBtn.disabled = false;
     }
 
@@ -392,6 +392,7 @@
         const emailText = geminiBtn.dataset.emailText;
         const classification = geminiBtn.dataset.classification === 'true';
         const classifier = geminiBtn.dataset.classifier;
+        const resultId = geminiBtn.dataset.resultId;
 
         if (!emailText) {
             alert('Nessun contenuto email disponibile da analizzare');
@@ -427,6 +428,7 @@
             emailText: emailText,
             classification: classification,
             classifier: classifier,
+            resultId: resultId,
             urls: urls // Includi gli URL raccolti dal DOM
         };
 

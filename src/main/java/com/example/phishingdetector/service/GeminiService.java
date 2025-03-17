@@ -8,15 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import javax.annotation.PostConstruct;
 
+import javax.annotation.PostConstruct;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -68,7 +67,7 @@ public class GeminiService {
      * @return CompletableFuture contenente l'analisi di Gemini come stringa
      */
     public CompletableFuture<String> analyzeEmailWithGemini(String emailContent, List<String> urls,
-                                                            boolean classification, String classifier) {
+                                                            boolean classification, String classifier, float[] embedding) {
         try {
             if (apiKey == null || apiKey.isEmpty()) {
                 CompletableFuture<String> future = new CompletableFuture<>();
@@ -76,7 +75,10 @@ public class GeminiService {
                 return future;
             }
 
-            String prompt = buildPrompt(emailContent, urls, classification, classifier);
+            String prompt = buildPrompt(emailContent, urls, classification, classifier, embedding);
+
+            logger.debug("PROMPT INVIATO A GEMINI:\n{}", prompt);
+
 
             // Costruisce il payload JSON per l'API Gemini
             ObjectNode contentNode = objectMapper.createObjectNode();
@@ -89,9 +91,6 @@ public class GeminiService {
             ArrayNode contentsArray = objectMapper.createArrayNode();
             contentsArray.add(contentNode);
             requestBody.set("contents", contentsArray);
-
-            logger.debug("Chiamata a Gemini API con chiave che inizia con: {}",
-                    apiKey.substring(0, Math.min(5, apiKey.length())) + "...");
 
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -130,17 +129,22 @@ public class GeminiService {
     /**
      * Costruisce il prompt da inviare a Gemini
      */
-    private String buildPrompt(String emailContent, List<String> urls, boolean classification, String classifier) {
+    private String buildPrompt(String emailContent, List<String> urls, boolean classification,
+                              String classifier, float[] embedding) {
         StringBuilder prompt = new StringBuilder();
-        prompt.append("Comportati come un professionista di sicurezza informatica" +
-                "analizza questa email che è stata classificata come ");
+
+        // Introduzione e contesto
+        prompt.append("Immagina di essere un esperto di sicurezza informatica che deve classificare una mail come phishing o legittima. ");
+        prompt.append("La mail è stata già classificata come ");
         prompt.append(classification ? "PHISHING" : "LEGITTIMA");
-        prompt.append(" dal classificatore ").append(classifier).append(".\n\n");
-        prompt.append(" Non farti però ingannare dalla classificazione dato che può avere un alto margine di errore").append(classifier).append(".\n\n");
+        prompt.append(" dal classificatore ").append(classifier).append(", ");
+        prompt.append("ma non devi farti influenzare da questa classificazione poiché il classificatore ha un margine d'errore.\n\n");
 
-        prompt.append("Contenuto dell'email:\n").append(emailContent).append("\n\n");
+        // Contenuto della mail
+        prompt.append("CONTENUTO DELLA MAIL:\n").append(emailContent).append("\n\n");
 
-        prompt.append("URL trovati nell'email:\n");
+        // URL trovati
+        prompt.append("URL TROVATI NELLA MAIL:\n");
         if (urls != null && !urls.isEmpty()) {
             for (String url : urls) {
                 prompt.append("- ").append(url).append("\n");
@@ -148,11 +152,50 @@ public class GeminiService {
         } else {
             prompt.append("Nessun URL trovato.\n");
         }
+        prompt.append("\n");
 
-        prompt.append("\nFornisci un'analisi di massimo 200 parole dei seguenti aspetti:\n");
-        prompt.append("1. Se concordi con la classificazione e perché\n");
-        prompt.append("2. Elementi sospetti o indicatori di phishing, se presenti\n");
-        prompt.append("3. Analisi degli URL trovati, se presenti (sono sospetti? puntano a domini noti per phishing?)\n");
+        // Informazioni tecniche sugli embedding e feature
+        if (embedding != null && embedding.length > 0) {
+            prompt.append("INFORMAZIONI TECNICHE:\n");
+            prompt.append("La mail è stata analizzata con embedding BERT multilingual. ");
+
+
+            if (embedding.length >= 774) {  // 768 dall'embedding BERT + 6 feature aggiuntive
+                int embeddingSize = embedding.length - 6;
+
+                prompt.append("L'embedding è un vettore di ").append(embedding.length).append(" elementi. ");
+                prompt.append("I primi ").append(embeddingSize).append(" elementi sono i valori dell'embedding BERT, ");
+                prompt.append("mentre gli ultimi 6 elementi sono feature specifiche:\n\n");
+
+                // Valori delle feature speciali
+                float containsUrl = embedding[embeddingSize];
+                float containsIpUrl = embedding[embeddingSize + 1];
+                float containsNonAscii = embedding[embeddingSize + 2];
+                float containsSpamWords = embedding[embeddingSize + 3];
+                float sentimentScore = embedding[embeddingSize + 4];
+                float sentimentMagnitude = embedding[embeddingSize + 5];
+
+                prompt.append("1. Presenza di URL: ").append(containsUrl > 0.5 ? "Sì" : "No").append(" (").append(String.format("%.2f", containsUrl)).append(")\n");
+                prompt.append("2. Presenza di URL con indirizzi IP: ").append(containsIpUrl > 0.5 ? "Sì" : "No").append(" (").append(String.format("%.2f", containsIpUrl)).append(")\n");
+                prompt.append("3. Presenza di URL con caratteri non ASCII: ").append(containsNonAscii > 0.5 ? "Sì" : "No").append(" (").append(String.format("%.2f", containsNonAscii)).append(")\n");
+                prompt.append("4. Presenza di parole tipiche dello spam: ").append(containsSpamWords > 0.5 ? "Sì" : "No").append(" (").append(String.format("%.2f", containsSpamWords)).append(")\n");
+                prompt.append("5. Sentiment score (API Natural Language): ").append(String.format("%.4f", sentimentScore));
+                prompt.append("6. Sentiment magnitude (API Natural Language): ").append(String.format("%.4f", sentimentMagnitude));
+            } else {
+                // Se per qualche motivo l'embedding non ha le feature attese
+                prompt.append("L'embedding ha una dimensione di ").append(embedding.length).append(" elementi.\n\n");
+            }
+        }
+
+        // Richiesta di analisi
+        prompt.append("RICHIESTA:\n");
+        prompt.append("Fornisci un'analisi dettagliata di massimo 300 parole a questa email, considerando tutti gli elementi forniti. La tua analisi dovrebbe includere:\n");
+        prompt.append("1. Se concordi o meno con la classificazione iniziale e perché\n");
+        prompt.append("2. Elementi sospetti o indicatori di phishing presenti nel testo\n");
+        prompt.append("3. Analisi degli URL (se presenti): sono legittimi o sospetti?\n");
+        prompt.append("4. Considerazioni sulle feature tecniche estratte\n");
+        prompt.append("5. Conclusione finale: classifichi questa mail come PHISHING o LEGITTIMA?\n\n");
+        prompt.append("Rispondi in formato strutturato con titoli per ogni sezione della tua analisi. Mantieni l'analisi concisa ma completa.");
 
         return prompt.toString();
     }

@@ -215,6 +215,10 @@ public class PhishingControllerAPI {
         }
     }
 
+    public PhishingResult getResultFromCache(String resultId) {
+        return resultCache.get(resultId);
+    }
+
     private String summarizeFeatures(float[] embedding) {
         // Restituiamo solo alcuni valori
         if (embedding.length > 5) {
