@@ -23,7 +23,8 @@
                 </div>
                 <!-- Campo nascosto per l'origine -->
                 <input type="hidden" name="origin" th:value="${origin}">
-                <div class="mb-3">
+                <div class="mb-3 d-flex gap-2">
+                    <a th:href="${origin == 'comparison' ? '/comparison' : '/analyzer'}" class="btn btn-secondary">Indietro</a>
                     <button type="submit" class="btn btn-primary">Carica</button>
                 </div>
             </form>

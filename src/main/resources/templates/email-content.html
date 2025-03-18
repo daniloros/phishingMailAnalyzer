@@ -38,12 +38,12 @@
             </div>
             <div class="card-body">
                 <div id="urlList">
-                    <div th:if="${urls != null and !urls.empty}">
+                    <div th:if="${urls != null and !urls.isEmpty()}">
                         <ul class="list-group">
                             <li th:each="url : ${urls}" class="list-group-item" th:text="${url}">URL esempio</li>
                         </ul>
                     </div>
-                    <div th:if="${urls == null or urls.empty}" class="alert alert-info">
+                    <div th:if="${urls == null or urls.isEmpty()}" class="alert alert-info">
                         Nessun URL trovato in questa email.
                     </div>
                 </div>
@@ -52,7 +52,7 @@
     </div>
 
     <div class="mt-3 d-flex gap-2">
-        <a href="/upload" class="btn btn-secondary">Carica un'altra email</a>
+        <a href="/upload" class="btn btn-secondary">Annulla</a>
         <a th:href="${origin == 'comparison' ? '/comparison' : '/analyzer'}" class="btn btn-primary">
             <span th:text="${origin == 'comparison' ? 'Vai alla comparazione' : 'Vai all analisi'}"></span>
         </a>
