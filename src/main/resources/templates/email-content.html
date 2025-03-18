@@ -49,13 +49,12 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="mt-3 d-flex gap-2">
-        <a href="/upload" class="btn btn-secondary">Annulla</a>
-        <a th:href="${origin == 'comparison' ? '/comparison' : '/analyzer'}" class="btn btn-primary">
-            <span th:text="${origin == 'comparison' ? 'Vai alla comparazione' : 'Vai all analisi'}"></span>
-        </a>
+        <div class="mt-3 d-flex gap-2">
+            <a href="/upload" class="btn btn-secondary">Annulla</a>
+            <a th:href="${origin == 'comparison' ? '/comparison' : '/analyzer'}" class="btn btn-primary">
+                <span>Conferma</span>
+            </a>
+        </div>
     </div>
 </div>
 </body>
