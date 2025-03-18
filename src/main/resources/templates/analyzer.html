@@ -60,14 +60,14 @@
             </div>
             <div class="card-body">
                 <div id="urlListDisplay">
-                    <div th:if="${urls != null and !urls.empty}">
+                    <div th:if="${urls != null and !urls.isEmpty()}">
                         <ul class="list-group" id="urlsList">
                             <li th:each="url : ${urls}" class="list-group-item">
                                 <a th:href="${url.startsWith('http') ? url : 'http://' + url}" target="_blank" th:text="${url}">URL</a>
                             </li>
                         </ul>
                     </div>
-                    <div id="noUrlsFound" th:if="${urls == null or urls.empty}" class="alert alert-info">
+                    <div id="noUrlsFound" th:if="${urls == null or urls.isEmpty()}" class="alert alert-info">
                         Nessun URL trovato in questa email.
                     </div>
                 </div>
@@ -114,6 +114,7 @@
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Analisi in corso...</span>
                 </div>
+                <p class="mt-2">Analisi mediante classificatore in corso ..</p>
             </div>
         </div>
     </div>
