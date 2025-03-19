@@ -23,7 +23,6 @@ public class SpamDetectorFromJson {
 
     public void findSpamWord(MailData mailData) throws IOException {
         String detectedLanguage = detectLanguage(this.emailText);
-//        System.out.println("Lingua rilevata: " + detectedLanguage);
 
         String jsonFile = detectedLanguage.equals("it") ? SPAMWORDSITA : SPAMWORDSENG;
 
@@ -62,34 +61,5 @@ public class SpamDetectorFromJson {
         LanguageResult result = languageDetector.detect(emailText);
         return result.getLanguage();
     }
-
-
-   /**
-    public static void main(String[] args) throws IOException {
-        String emailText = "This is a special offer just for you! Claim your free credit card now.";
-
-        String detectedLanguage = detectLanguage(emailText);
-        System.out.println("Lingua rilevata: " + detectedLanguage);
-
-        String jsonFile = detectedLanguage.equals("it") ? SPAMWORDSITA : SPAMWORDSENG;
-
-        List<String> paroleChiave = loadKeywordsFromJson(jsonFile);
-
-        Trie.TrieBuilder trieBuilder = Trie.builder().ignoreCase().onlyWholeWords();
-        for (String parola : paroleChiave) {
-            trieBuilder.addKeyword(parola);
-        }
-
-        Trie trie = trieBuilder.build();
-
-        boolean containsSpam = containsSpamWord(trie, emailText);
-        if (containsSpam) {
-            System.out.println("⚠️ L'email contiene parole sospette!");
-        } else {
-            System.out.println("✅ L'email è pulita.");
-        }
-    }
-    */
-
 
 }

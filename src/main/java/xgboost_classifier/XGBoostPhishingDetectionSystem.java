@@ -1,17 +1,13 @@
 package xgboost_classifier;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import controller.*;
 import model.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Scanner;
 
 /**
  * Questa classe integra il servizio UmBERTO con il classificatore XGBoost per phishing.
@@ -108,11 +104,9 @@ public class XGBoostPhishingDetectionSystem {
         mapper.writeValue(new File(filename), allProcessedEmails);
 
         // Addestra il classificatore
-        System.out.println("Addestramento del classificatore XGBoost...");
         classifier.train(embeddings, labels);
 
         // Valuta le performance
-        System.out.println("\nValutazione del modello XGBoost...");
         classifier.evaluate(embeddings, labels);
     }
 
@@ -130,87 +124,5 @@ public class XGBoostPhishingDetectionSystem {
         classifier.loadModel(filepath);
     }
 
-    public void analyzeEmailWithFeedback(String emailText, PhishingResult result, boolean userFeedback) throws Exception {
-        // Creiamo un oggetto feedback
-        ProcessedEmailForJSON feedback = new ProcessedEmailForJSON(
-                emailText,
-                userFeedback,
-                result.getEmbedding(),
-                result.getNum_token(),
-                new Date()
-        );
 
-        // Salviamo il feedback in un file JSON
-        saveFeedbackToJson(feedback);
-    }
-
-    private void saveFeedbackToJson(ProcessedEmailForJSON feedback) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        File feedbackFile = new File(datasetPath + "/xgboost_feedback_dataset.json");
-
-        List<ProcessedEmailForJSON> existingFeedback = new ArrayList<>();
-
-        // Se il file esiste, leggiamo il contenuto esistente
-        if (feedbackFile.exists()) {
-            existingFeedback = mapper.readValue(feedbackFile,
-                    mapper.getTypeFactory().constructCollectionType(List.class, ProcessedEmailForJSON.class));
-        }
-
-        // Aggiungiamo il nuovo feedback
-        existingFeedback.add(feedback);
-
-        // Salviamo il file aggiornato
-        mapper.writeValue(feedbackFile, existingFeedback);
-    }
-
-    public static void main(String[] args) {
-        try {
-            // Configurazione del sistema
-            String datasetPath = "dataset/processed";
-
-            // Crea le directory necessarie
-            Files.createDirectories(Paths.get(datasetPath));
-
-            // Inizializza il sistema
-            XGBoostPhishingDetectionSystem system = new XGBoostPhishingDetectionSystem(datasetPath);
-
-            // Training del sistema (decommenta se necessario)
-            // system.trainFromFile("dataset/training_emails.json");
-
-            // Salva il modello addestrato
-            // system.saveModel("xgboost_phishing_model.model");
-
-            // Carica un modello esistente (decommenta se necessario)
-            // system.loadModel("xgboost_phishing_model.model");
-
-            // Esempio di analisi di una nuova email
-            String emailText = "Inserisci un testo mail di prova ...";
-            PhishingResult result = system.analyzeEmail(emailText);
-
-            System.out.println("\nRisultato analisi XGBoost:");
-            System.out.println("Email: " + result.getEmailText());
-            System.out.println("È phishing? " + result.isPhishing());
-
-            // Chiediamo il feedback all'utente
-            System.out.println("\nQuesta predizione è corretta? (s/n):");
-            Scanner scanner = new Scanner(System.in);
-            String userInput = scanner.nextLine().toLowerCase();
-
-            boolean actualPhishing = result.isPhishing(); // valore predetto di default
-            if (userInput.equals("n")) {
-                // Se l'utente dice che la predizione è sbagliata, invertiamo il valore
-                actualPhishing = !result.isPhishing();
-            }
-
-            System.out.println("Attendi... creo il file json");
-            system.analyzeEmailWithFeedback(emailText, result, actualPhishing);
-
-            System.out.println("\nFeedback salvato correttamente!");
-
-            scanner.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

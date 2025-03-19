@@ -32,7 +32,6 @@ public class BERTEmbeddingClient {
     public static EmailFromBert getEmbedding(String emailText) throws IOException {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpPost request = new HttpPost(API_URL);
-//            System.out.println("Attempting to connect to: " + API_URL);
             request.setHeader("Content-Type", "application/json");
 
             // Creiamo il payload JSON
@@ -41,9 +40,7 @@ public class BERTEmbeddingClient {
 
             // Facciamo la richiesta
             try (CloseableHttpResponse response = httpClient.execute(request)) {
-//                System.out.println("Response status: " + response.getStatusLine());
                 String responseBody = EntityUtils.toString(response.getEntity());
-//                System.out.println("Response body: " + responseBody);
 
                 // Controlla se la risposta è valida
                 if (response.getStatusLine().getStatusCode() != 200) {

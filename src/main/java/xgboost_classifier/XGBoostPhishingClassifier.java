@@ -125,7 +125,6 @@ public class XGBoostPhishingClassifier {
         // Addestriamo il modello
         booster = XGBoost.train(trainMat, params, numRounds, watches, null, null);
 
-        System.out.println("Modello XGBoost addestrato con successo");
     }
 
     /**
@@ -190,48 +189,6 @@ public class XGBoostPhishingClassifier {
         System.out.println("True Negatives: " + tn);
         System.out.println("False Negatives: " + fn);
 
-       /**
-            // Calcoli per metriche in stile Weka
-            int totalInstances = tp + fp + tn + fn;
-            int correctInstances = tp + tn;
-            int incorrectInstances = fp + fn;
-            double accuracyPercent = 100.0 * correctInstances / totalInstances;
-            double errorPercent = 100.0 * incorrectInstances / totalInstances;
-
-            // Calcolo del Kappa statistic
-            double pe = ((double)(tp + fp) * (tp + fn) + (double)(tn + fn) * (tn + fp)) / (totalInstances * totalInstances);
-            double kappa = (accuracyPercent/100.0 - pe) / (1 - pe);
-
-            // Calcoliamo MAE e RMSE (approssimati)
-            double sumAbsError = 0;
-            double sumSquaredError = 0;
-            for (int i = 0; i < predictions.length; i++) {
-                double actual = labels.get(i) ? 1.0 : 0.0;
-                double predicted = predictions[i][0];
-                sumAbsError += Math.abs(predicted - actual);
-                sumSquaredError += Math.pow(predicted - actual, 2);
-            }
-            double mae = sumAbsError / totalInstances;
-            double rmse = Math.sqrt(sumSquaredError / totalInstances);
-
-            // WEKA-style output
-            System.out.println("\n=== Risultati della validazione ===\n");
-            System.out.printf("Correctly Classified Instances       %d               %.4f %%\n",
-                    correctInstances, accuracyPercent);
-            System.out.printf("Incorrectly Classified Instances     %d               %.4f %%\n",
-                    incorrectInstances, errorPercent);
-            System.out.printf("Kappa statistic                          %.4f\n", kappa);
-            System.out.printf("Mean absolute error                      %.4f\n", mae);
-            System.out.printf("Root mean squared error                  %.4f\n", rmse);
-            System.out.println("Total Number of Instances              " + totalInstances + "     \n");
-
-            // Confusion Matrix (Weka-style)
-            System.out.println("\n=== Matrice di confusione ===");
-            System.out.println("=== Confusion Matrix ===\n");
-            System.out.println("   a   b   <-- classified as");
-            System.out.printf(" %3d %3d |   a = phishing\n", tp, fn);
-            System.out.printf(" %3d %3d |   b = legitimate\n", fp, tn);
-        */
     }
 
     /**

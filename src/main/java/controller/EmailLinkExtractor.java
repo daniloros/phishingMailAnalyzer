@@ -22,8 +22,7 @@ public class EmailLinkExtractor {
 
 
     private static void findLinkInText(String text, MailData mailData) {
-//        String urlRegex = "\\b((http(s)?://)?(www\\.)?[a-zA-Z0-9-]+(\\.[a-zA-Z]{2,})+(:\\d+)?(/[\\w\\-\\.~:/?#\\[\\]@!$&'()*+,;=%]*)?)\\b";
-        //TODO: VALUTARE QUALE REGEX E' MIGLIORE
+
         String urlRegex = "(https?://|www\\.)([-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6})\\b[-a-zA-Z0-9()@:%_+.~#?&/=\\-]*";
 
         Pattern pattern = Pattern.compile(urlRegex);
@@ -42,15 +41,10 @@ public class EmailLinkExtractor {
 
             try {
                 if (isValidURL(originalUrl)) {
-//                    System.out.println("l'url è valido: " + originalUrl);
                     mailData.setLink(originalUrl);
                     if (containsNonASCIICharacters(originalUrl)) {
-//                        System.out.println("ATTENZIONE, l'url contiene caratteri sospetti");
-//                        mailData.addSuspiciousUrl(originalUrl);
                         mailData.setContainsNonAsciiChars(true);
                     }
-                } else {
-//                    System.out.println("l'url non è valido: " + originalUrl);
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);

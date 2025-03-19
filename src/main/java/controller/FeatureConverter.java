@@ -12,7 +12,6 @@ public class FeatureConverter {
 
         // Aggiungiamo le feature numeriche
         features.add(mailData.getLinks().isEmpty() ? 0.0f : 1.0f);
-//        features.add(mailData.getSuspiciousUrls().isEmpty() ? 0.0f : 1.0f)
         features.add(mailData.isContainsNonAsciiChars() ? 1.0f : 0.0f);
         features.add(mailData.isContainsIpAsUrl() ? 1.0f : 0.0f);
         features.add(mailData.isContainsSpam() ? 1.0f : 0.0f);

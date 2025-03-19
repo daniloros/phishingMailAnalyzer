@@ -67,7 +67,6 @@ public class SVMPhishingDetectionSystem {
                 mapper.getTypeFactory().constructCollectionType(List.class, TrainingEmail.class)
         );
 
-        System.out.println("Processando " + trainingEmails.size() + " email per il training SVM...");
 
         // Processiamo ogni email
         for (TrainingEmail email : trainingEmails) {
@@ -110,11 +109,9 @@ public class SVMPhishingDetectionSystem {
         mapper.writeValue(new File(filename), allProcessedEmails);
 
         // Addestriamo il classificatore SVM
-        System.out.println("Addestramento del classificatore SVM...");
         classifier.train(embeddings, labels);
 
         // Valutiamo le performance
-        System.out.println("\nValutazione del modello SVM...");
         classifier.evaluate(embeddings, labels);
     }
 

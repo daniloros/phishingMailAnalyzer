@@ -21,8 +21,10 @@ public class TrainingModels {
             EmailFeatureProcessor processor = new EmailFeatureProcessor(datasetPath);
 
             // Check if processed file already exists
+            // for update models: create unified_processed_emails.json (old json file + new json from user feedback
             File processedFile = new File(datasetPath + "/unified_processed_emails.json");
             if (!processedFile.exists()) {
+                //file for first train (File without embedding bert but with sentiment analysis)
                 System.out.println("Processing emails and extracting features...");
                 processor.processEmails(inputJsonPath);
             } else {

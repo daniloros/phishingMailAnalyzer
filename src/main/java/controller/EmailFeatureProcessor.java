@@ -44,8 +44,6 @@ public class EmailFeatureProcessor {
         JsonNode root = mapper.readTree(new File(inputJsonPath));
         JsonNode emails = root.get("emails");
 
-        System.out.println("Processing " + emails.size() + " emails...");
-
         // Process each email
         for (JsonNode emailNode : emails) {
             try {
@@ -93,9 +91,6 @@ public class EmailFeatureProcessor {
 
         // Save the processed emails to a single file
         mapper.writeValue(new File(outputFilePath), processedEmails);
-
-        System.out.println("Successfully processed " + processedEmails.size() + " emails");
-        System.out.println("Saved to: " + outputFilePath);
 
         return outputFilePath;
     }
