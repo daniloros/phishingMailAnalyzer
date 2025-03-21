@@ -30,12 +30,12 @@ public class EmailFeatureProcessor {
      * @param inputJsonPath Path to the original JSON file with email data
      * @return Path to the processed dataset file
      */
-    public String processEmails(String inputJsonPath) throws Exception {
+    public String processEmails(String inputJsonPath, String outputFileName) throws Exception {
         // Ensure output directory exists
         Files.createDirectories(Paths.get(datasetPath));
 
         // Output file path
-        String outputFilePath = datasetPath + "/unified_processed_emails.json";
+        String outputFilePath = datasetPath + outputFileName;
 
         ObjectMapper mapper = new ObjectMapper();
         List<ProcessedEmailForJSON> processedEmails = new ArrayList<>();
@@ -100,8 +100,8 @@ public class EmailFeatureProcessor {
      *
      * @return List of processed emails with features
      */
-    public List<ProcessedEmailForJSON> loadProcessedEmails() throws IOException {
-        String filePath = datasetPath + "/unified_processed_emails.json";
+    public List<ProcessedEmailForJSON> loadProcessedEmails(String outputFileName) throws IOException {
+        String filePath = datasetPath + outputFileName;
         ObjectMapper mapper = new ObjectMapper();
 
         return mapper.readValue(
