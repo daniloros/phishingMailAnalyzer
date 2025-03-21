@@ -8,14 +8,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TrainingModels {
+public class TestDataEvaluation {
     public static void main(String[] args) {
         try {
             // Configuration
-            String datasetPath = "src/main/resources/dataset/processed";
-            String inputJsonPath = "src/main/resources/dataset/emails_sentiment.json";
-            String outputFileName = "/unified_feedback_dataset.json";
-
+            String datasetPath = "src/main/resources/dataset/evaluation_set";
+            String inputJsonPath = "src/main/resources/dataset/evaluation_set/unbalanced_email_sentiment.json";
+            String outputFileName = "/unbalanced_email_processed_emails.json";
             // Step 1: Process all emails once
             EmailFeatureProcessor processor = new EmailFeatureProcessor(datasetPath);
 
@@ -23,7 +22,7 @@ public class TrainingModels {
             File processedFile = new File(datasetPath + outputFileName);
             if (!processedFile.exists()) {
                 System.out.println("Processing emails and extracting features...");
-                processor.processEmails(inputJsonPath, outputFileName );
+                processor.processEmails(inputJsonPath, outputFileName);
             } else {
                 System.out.println("Using existing processed email features...");
             }
@@ -43,31 +42,31 @@ public class TrainingModels {
 
             // Step 4: Train all models using the same processed data
 
+            String rfModelPath = "rf_model_test_march.model";
+            String svmModelPath = "svm_model_test_march.model";
+            String xgboostModelPath = "xgboost_model_march.model";
+
+
             // Train Random Forest
             System.out.println("\nTraining Random Forest...");
             RFPhishingClassifier rfClassifier = new RFPhishingClassifier();
-            rfClassifier.train(embeddings, labels);
+            rfClassifier.loadModel(rfModelPath);
             rfClassifier.evaluate(embeddings, labels);
-            rfClassifier.saveModel("rf_model_test_march.model");
-            System.out.println("Random Forest model saved successfully");
+
 
             // Train SVM
             System.out.println("\nTraining SVM...");
             SVMPhishingClassifier svmClassifier = new SVMPhishingClassifier();
-            svmClassifier.train(embeddings, labels);
+            svmClassifier.loadModel(svmModelPath);
             svmClassifier.evaluate(embeddings, labels);
-            svmClassifier.saveModel("svm_model_test_march.model");
-            System.out.println("SVM model saved successfully");
 
             // Train XGBoost
             System.out.println("\nTraining XGBoost...");
             XGBoostPhishingClassifier xgbClassifier = new XGBoostPhishingClassifier();
-            xgbClassifier.train(embeddings, labels);
+            xgbClassifier.loadModel(xgboostModelPath);
             xgbClassifier.evaluate(embeddings, labels);
-            xgbClassifier.saveModel("xgboost_model_march.model");
             System.out.println("XGBoost model saved successfully");
 
-            System.out.println("\nAll models trained and saved successfully!");
 
         } catch (Exception e) {
             System.err.println("Error during training process:");
